@@ -3,7 +3,7 @@
 #include <pthread.h>
 
 int komb_api_mutex_init(komb_mutex_t *mutex) {
-    return komb_mutex_init(mutex, NULL);
+    return komb_mutex_create(mutex, NULL);
 }
 
 int komb_api_mutex_destroy(komb_mutex_t *mutex) {
@@ -18,8 +18,8 @@ int komb_api_mutex_trylock(komb_mutex_t *mutex) {
     return komb_mutex_trylock(mutex, NULL);
 }
 
-int komb_api_mutex_unlock(komb_mutex_t *mutex) {
-    return komb_mutex_unlock(mutex, NULL);
+void komb_api_mutex_unlock(komb_mutex_t *mutex) {
+    komb_mutex_unlock(mutex, NULL);
 }
 
 void komb_api_thread_start(void) {
