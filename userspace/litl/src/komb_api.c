@@ -2,8 +2,8 @@
 #include "kombmtx.h"
 #include <pthread.h>
 
-int komb_api_mutex_init(komb_mutex_t *mutex) {
-    return komb_mutex_create(mutex, NULL);
+komb_mutex_t* komb_api_mutex_create(pthread_mutexattr_t *attr) {
+    return komb_mutex_create(attr);
 }
 
 int komb_api_mutex_destroy(komb_mutex_t *mutex) {
