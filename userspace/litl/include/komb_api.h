@@ -2,6 +2,7 @@
 #define KOMB_API_H
 
 #include <pthread.h>
+#include <stdint.h>
 #include "kombmtx.h"
 
 #ifdef __cplusplus
