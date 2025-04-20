@@ -8,7 +8,7 @@
 
 // 共享计数器
 int counter = 0;
-komb_mutex_t counter_lock;
+komb_mutex_t* counter_lock;
 
 // 线程函数
 void* thread_func(void* arg) {
@@ -21,9 +21,9 @@ void* thread_func(void* arg) {
     
     for (int i = 0; i < NUM_ITERATIONS; i++) {
         // 使用komb锁保护临界区
-        komb_api_mutex_lock(&counter_lock);
+        komb_api_mutex_lock(counter_lock);
         counter++;
-        komb_api_mutex_unlock(&counter_lock);
+        komb_api_mutex_unlock(counter_lock);
     }
     
     printf("Thread %d finished\n", thread_id);
@@ -39,7 +39,7 @@ int main() {
     int thread_ids[NUM_THREADS];
     
     // 初始化komb锁
-    komb_api_mutex_init(&counter_lock);
+    counter_lock = komb_api_mutex_create(NULL);
     
     // 创建线程
     for (int i = 0; i < NUM_THREADS; i++) {
@@ -56,7 +56,7 @@ int main() {
     }
     
     // 销毁komb锁
-    komb_api_mutex_destroy(&counter_lock);
+    komb_api_mutex_destroy(counter_lock);
     
     // 验证结果
     printf("Final counter value: %d (expected: %d)\n", 

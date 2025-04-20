@@ -2,7 +2,11 @@
 #include "kombmtx.h"
 #include <pthread.h>
 
+unsigned int last_thread_id;
+__thread unsigned int cur_thread_id;
+
 komb_mutex_t* komb_api_mutex_create(pthread_mutexattr_t *attr) {
+    cur_thread_id = __sync_fetch_and_add(&last_thread_id, 1);
     return komb_mutex_create(attr);
 }
 
