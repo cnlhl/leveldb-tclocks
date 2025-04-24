@@ -153,7 +153,7 @@ CondVar::CondVar(Mutex* mu)
 CondVar::~CondVar() { PthreadCall("destroy cv", pthread_cond_destroy(&cv_)); }
 
 void CondVar::Wait() {
-  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->mu_));
+  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
 }
 
 void CondVar::Signal() {
