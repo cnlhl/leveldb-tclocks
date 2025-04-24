@@ -44,7 +44,12 @@
 #endif
 #include <stdint.h>
 #include <string>
+#include <atomic>
 #include "port/atomic_pointer.h"
+
+#ifdef USE_TCLOCK
+#include <komb_api.h>
+#endif
 
 #ifndef PLATFORM_IS_LITTLE_ENDIAN
 #define PLATFORM_IS_LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -86,11 +91,24 @@ class Mutex {
 
   void Lock();
   void Unlock();
+  bool TryLock();
   void AssertHeld() { }
 
  private:
   friend class CondVar;
-  pthread_mutex_t mu_;
+  
+  enum class Backend { PTHREAD, TCLOCK };
+  
+  static const int64_t kWindowNs = 5'000'000;  // 5 ms
+  static const int kThreshold = 32;
+  
+  Backend backend_;
+  pthread_mutex_t pm_;
+#ifdef USE_TCLOCK
+  komb_mutex_t* km_;
+  std::atomic<int64_t> window_start_ns_;
+  std::atomic<int64_t> fail_cnt_;
+#endif
 
   // No copying
   Mutex(const Mutex&);
