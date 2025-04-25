@@ -18,7 +18,7 @@ class MutexTClockTest { };
 // 辅助函数：检查是否切换到 TCLock
 bool IsUsingTCLock(const Mutex& mu) {
 #ifdef USE_TCLOCK
-  return mu.backend_ == Mutex::Backend::TCLOCK;
+  return mu.IsUsingTCLock();
 #else
   return false;
 #endif
