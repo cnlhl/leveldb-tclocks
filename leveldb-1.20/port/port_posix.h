@@ -93,6 +93,10 @@ class Mutex {
   void Unlock();
   bool TryLock();
   void AssertHeld() { }
+  
+#ifdef USE_TCLOCK
+  bool IsUsingTCLock() const { return backend_ == Backend::TCLOCK; }
+#endif
 
  private:
   friend class CondVar;
