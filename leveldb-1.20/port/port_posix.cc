@@ -147,21 +147,57 @@ bool Mutex::TryLock() {
 
 CondVar::CondVar(Mutex* mu)
     : mu_(mu) {
+#ifdef USE_TCLOCK
+    PthreadCall("init cv", komb_cond_init(&kcv_, NULL));
+#else
     PthreadCall("init cv", pthread_cond_init(&cv_, NULL));
+#endif
 }
 
-CondVar::~CondVar() { PthreadCall("destroy cv", pthread_cond_destroy(&cv_)); }
+CondVar::~CondVar() { 
+#ifdef USE_TCLOCK
+    PthreadCall("destroy cv", komb_cond_destroy(&kcv_));
+#else
+    PthreadCall("destroy cv", pthread_cond_destroy(&cv_));
+#endif
+}
 
 void CondVar::Wait() {
-  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+#ifdef USE_TCLOCK
+    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+        // 使用 TCLock 的条件变量
+        komb_node_t node;
+        PthreadCall("wait", komb_cond_wait(&kcv_, mu_->km_, &node));
+    } else {
+        PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+    }
+#else
+    PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+#endif
 }
 
 void CondVar::Signal() {
-  PthreadCall("signal", pthread_cond_signal(&cv_));
+#ifdef USE_TCLOCK
+    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+        PthreadCall("signal", komb_cond_signal(&kcv_));
+    } else {
+        PthreadCall("signal", pthread_cond_signal(&cv_));
+    }
+#else
+    PthreadCall("signal", pthread_cond_signal(&cv_));
+#endif
 }
 
 void CondVar::SignalAll() {
-  PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+#ifdef USE_TCLOCK
+    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+        PthreadCall("broadcast", komb_cond_broadcast(&kcv_));
+    } else {
+        PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+    }
+#else
+    PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+#endif
 }
 
 void InitOnce(OnceType* once, void (*initializer)()) {

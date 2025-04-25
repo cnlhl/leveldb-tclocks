@@ -123,8 +123,12 @@ class CondVar {
   void Signal();
   void SignalAll();
  private:
-  pthread_cond_t cv_;
   Mutex* mu_;
+#ifdef USE_TCLOCK
+  komb_cond_t kcv_;
+#else
+  pthread_cond_t cv_;
+#endif
 };
 
 typedef pthread_once_t OnceType;
