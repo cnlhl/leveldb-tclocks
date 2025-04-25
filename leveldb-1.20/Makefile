@@ -437,5 +437,5 @@ $(SHARED_OUTDIR)/port/port_posix_sse.o: port/port_posix_sse.cc
 $(STATIC_OUTDIR)/port/mutex_tclock_test.o: port/mutex_tclock_test.cc $(STATIC_OUTDIR)/port
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(STATIC_OUTDIR)/port/mutex_tclock_test: $(STATIC_OUTDIR)/port/mutex_tclock_test.o $(STATIC_OUTDIR)/libleveldb.a $(TESTHARNESS)
-	$(CXX) $(LDFLAGS) $(STATIC_OUTDIR)/port/mutex_tclock_test.o $(STATIC_OUTDIR)/libleveldb.a $(TESTHARNESS) -o $@ $(LIBS)
+$(STATIC_OUTDIR)/mutex_tclock_test: $(STATIC_OUTDIR)/port/mutex_tclock_test.o $(STATIC_LIBOBJECTS) $(TESTHARNESS)
+	$(CXX) $(LDFLAGS) $(STATIC_OUTDIR)/port/mutex_tclock_test.o $(STATIC_LIBOBJECTS) $(TESTHARNESS) -o $@ $(LIBS)
