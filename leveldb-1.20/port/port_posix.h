@@ -103,7 +103,7 @@ class Mutex {
   
   enum class Backend { PTHREAD, TCLOCK };
   
-  static const int64_t kWindowNs = 5000000000;  // 5 ms
+  static const int64_t kWindowNs = 5000000;  // 5 ms
   static const int kThreshold = 32;
   
   Backend backend_;
