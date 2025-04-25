@@ -103,7 +103,7 @@ class Mutex {
   
   enum class Backend { PTHREAD, TCLOCK };
   
-  static const int64_t kWindowNs = 5000000;  // 5 ms
+  static const int64_t kWindowNs = 5000000000;  // 5 ms
   static const int kThreshold = 32;
   
   Backend backend_;
@@ -130,9 +130,8 @@ class CondVar {
   Mutex* mu_;
 #ifdef USE_TCLOCK
   komb_cond_t kcv_;
-#else
-  pthread_cond_t cv_;
 #endif
+  pthread_cond_t cv_;
 };
 
 typedef pthread_once_t OnceType;

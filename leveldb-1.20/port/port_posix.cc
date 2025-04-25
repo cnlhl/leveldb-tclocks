@@ -9,6 +9,17 @@
 #include <string.h>
 #include <time.h>
 
+
+namespace leveldb {
+namespace port {
+
+static void PthreadCall(const char* label, int result) {
+  if (result != 0) {
+    fprintf(stderr, "pthread %s: %s\n", label, strerror(result));
+    abort();
+  }
+}
+
 #ifdef USE_TCLOCK
 static pthread_once_t komb_tls_once = PTHREAD_ONCE_INIT;
 static pthread_key_t komb_tls_key;
@@ -24,16 +35,6 @@ static void InitKombTlsKey() {
   PthreadCall("create key", pthread_key_create(&komb_tls_key, KombTlsDestructor));
 }
 #endif
-
-namespace leveldb {
-namespace port {
-
-static void PthreadCall(const char* label, int result) {
-  if (result != 0) {
-    fprintf(stderr, "pthread %s: %s\n", label, strerror(result));
-    abort();
-  }
-}
 
 Mutex::Mutex() : backend_(Backend::PTHREAD) {
   PthreadCall("init mutex", pthread_mutex_init(&pm_, NULL));
