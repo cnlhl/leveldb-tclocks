@@ -45,6 +45,43 @@ int komb_api_mutex_trylock(komb_mutex_t *mutex);
 void komb_api_mutex_unlock(komb_mutex_t *mutex);
 
 /**
+ * @brief 初始化komb条件变量
+ * @param cond 指向komb_cond_t的指针
+ * @param attr 指向pthread_condattr_t的指针
+ * @return 成功返回0，失败返回错误码
+ */
+int komb_api_cond_init(komb_cond_t *cond, const pthread_condattr_t *attr);
+
+/**
+ * @brief 等待komb条件变量
+ * @param cond 指向komb_cond_t的指针
+ * @param mutex 指向komb_mutex_t的指针
+ * @return 成功返回0，失败返回错误码
+ */
+int komb_api_cond_wait(komb_cond_t *cond, komb_mutex_t *mutex);
+
+/**
+ * @brief 唤醒一个等待komb条件变量的线程
+ * @param cond 指向komb_cond_t的指针
+ * @return 成功返回0，失败返回错误码
+ */
+int komb_api_cond_signal(komb_cond_t *cond);
+
+/**
+ * @brief 唤醒所有等待komb条件变量的线程
+ * @param cond 指向komb_cond_t的指针
+ * @return 成功返回0，失败返回错误码
+ */
+int komb_api_cond_broadcast(komb_cond_t *cond);
+
+/**
+ * @brief 销毁komb条件变量
+ * @param cond 指向komb_cond_t的指针
+ * @return 成功返回0，失败返回错误码
+ */
+int komb_api_cond_destroy(komb_cond_t *cond);
+
+/**
  * @brief 初始化线程上下文，必须在每个使用komb锁的线程开始时调用
  */
 void komb_api_thread_start(void);

@@ -26,6 +26,27 @@ void komb_api_mutex_unlock(komb_mutex_t *mutex) {
     komb_mutex_unlock(mutex, NULL);
 }
 
+int komb_api_cond_init(komb_cond_t *cond, const pthread_condattr_t *attr) {
+    return komb_cond_init(cond, attr);
+}
+
+int komb_api_cond_wait(komb_cond_t *cond, komb_mutex_t *mutex) {
+    komb_node_t node;
+    return komb_cond_wait(cond, mutex, &node);
+}
+
+int komb_api_cond_signal(komb_cond_t *cond) {
+    return komb_cond_signal(cond);
+}
+
+int komb_api_cond_broadcast(komb_cond_t *cond) {
+    return komb_cond_broadcast(cond);
+}
+
+int komb_api_cond_destroy(komb_cond_t *cond) {
+    return komb_cond_destroy(cond);
+}
+
 void komb_api_thread_start(void) {
     komb_thread_start();
 }
