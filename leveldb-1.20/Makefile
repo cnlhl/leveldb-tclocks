@@ -28,7 +28,7 @@ ifeq ($(USE_TCLOCK),1)
     CXXFLAGS += -I$(LITL_DIR)/include
     LDFLAGS += -L$(LITL_DIR)/lib
   endif
-  LIBS += -ltclock
+  LIBS += -lkomb_api
 endif
 
 TESTS = \
