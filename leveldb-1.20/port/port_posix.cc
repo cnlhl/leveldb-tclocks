@@ -36,7 +36,8 @@ static void InitKombTlsKey() {
 }
 #endif
 
-Mutex::Mutex() : backend_(Backend::PTHREAD) {
+Mutex::Mutex() {
+  backend_.store(Backend::PTHREAD, std::memory_order_release);
   PthreadCall("init mutex", pthread_mutex_init(&pm_, NULL));
 #ifdef USE_TCLOCK
   km_ = nullptr;
@@ -56,7 +57,7 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
 #ifdef USE_TCLOCK
-  if (backend_ == Backend::PTHREAD) {
+  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
@@ -77,7 +78,7 @@ void Mutex::Lock() {
         km_ = komb_api_mutex_create(nullptr);
         if (km_ == nullptr) {
           // Failed to create TCLock mutex, stay with pthread
-          backend_ = Backend::PTHREAD;
+          backend_.store(Backend::PTHREAD, std::memory_order_release);
           PthreadCall("lock", pthread_mutex_lock(&pm_));
           return;
         }
@@ -89,7 +90,7 @@ void Mutex::Lock() {
       }
       pthread_mutex_unlock(&pm_);
       
-      backend_ = Backend::TCLOCK;
+      backend_.store(Backend::TCLOCK, std::memory_order_release);
       
       if (!komb_tls_ready) {
         PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
@@ -110,7 +111,7 @@ void Mutex::Lock() {
 
 void Mutex::Unlock() {
 #ifdef USE_TCLOCK
-  if (backend_ == Backend::PTHREAD) {
+  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
     PthreadCall("unlock", pthread_mutex_unlock(&pm_));
   } else {
     komb_api_mutex_unlock(km_);
@@ -122,7 +123,7 @@ void Mutex::Unlock() {
 
 bool Mutex::TryLock() {
 #ifdef USE_TCLOCK
-  if (backend_ == Backend::PTHREAD) {
+  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
@@ -165,7 +166,7 @@ CondVar::~CondVar() {
 
 void CondVar::Wait() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
         // 使用 TCLock 的条件变量
         PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
     } else {
@@ -178,7 +179,7 @@ void CondVar::Wait() {
 
 void CondVar::Signal() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
         PthreadCall("signal", komb_api_cond_signal(&kcv_));
     } else {
         PthreadCall("signal", pthread_cond_signal(&cv_));
@@ -190,7 +191,7 @@ void CondVar::Signal() {
 
 void CondVar::SignalAll() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_ == Mutex::Backend::TCLOCK) {
+    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
         PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
     } else {
         PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
