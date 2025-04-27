@@ -154,28 +154,43 @@ void Mutex::Unlock() {
 
 bool Mutex::TryLock() {
 #ifdef USE_TCLOCK
-  Backend current = backend_.load(std::memory_order_acquire);
-  if (current == Backend::PTHREAD) {
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
-    
-    if (now_ns - window_start_ns_ > kWindowNs) {
-      window_start_ns_ = now_ns;
-      fail_cnt_ = 0;
+  while(true){
+    Backend current = backend_.load(std::memory_order_acquire);
+    if (current == Backend::PTHREAD) {
+      struct timespec now;
+      clock_gettime(CLOCK_MONOTONIC, &now);
+      int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
+      
+      if (now_ns - window_start_ns_ > kWindowNs) {
+        window_start_ns_ = now_ns;
+        fail_cnt_ = 0;
+      }
+      
+      if (pthread_mutex_trylock(&pm_) == 0) {
+        if(backend_.load(std::memory_order_relaxed) == Backend::PTHREAD){
+          // 这里是成功获取了 pm_ 锁
+          return true;
+        }
+        pthread_mutex_unlock(&pm_);
+        continue;
+      }
+      
+      fail_cnt_++;
+      return false;
+    } else if (current == Backend::TCLOCK) {
+      if (komb_api_mutex_trylock(km_) == 0) {
+        if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
+          // 这里是成功获取了 km_ 锁
+          return true;
+        }
+        komb_api_mutex_unlock(km_);
+        continue;
+      }
+      return false;
     }
-    
-    if (pthread_mutex_trylock(&pm_) == 0) {
-      return true;
-    }
-    
-    fail_cnt_++;
+    // 如果状态是 SWITCHING_TO_TCLOCK，返回 false
     return false;
-  } else if (current == Backend::TCLOCK) {
-    return komb_api_mutex_trylock(km_) == 0;
   }
-  // 如果状态是 SWITCHING_TO_TCLOCK，返回 false
-  return false;
 #else
   return pthread_mutex_trylock(&pm_) == 0;
 #endif
