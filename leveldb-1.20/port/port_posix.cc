@@ -23,7 +23,6 @@ static void PthreadCall(const char* label, int result) {
 #ifdef USE_TCLOCK
 static pthread_once_t komb_tls_once = PTHREAD_ONCE_INIT;
 static pthread_key_t komb_tls_key;
-static thread_local bool komb_tls_ready = false;
 
 static void KombTlsDestructor(void* value) {
   if (value != nullptr) {
@@ -33,6 +32,16 @@ static void KombTlsDestructor(void* value) {
 
 static void InitKombTlsKey() {
   PthreadCall("create key", pthread_key_create(&komb_tls_key, KombTlsDestructor));
+}
+
+static void EnsureTLSReady() {
+  static thread_local bool ready = false;
+  if (!ready) {
+    PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
+    komb_api_thread_start();
+    ready = true;
+    PthreadCall("set specific", pthread_setspecific(komb_tls_key, reinterpret_cast<void*>(1)));
+  }
 }
 #endif
 
@@ -104,6 +113,9 @@ void Mutex::Lock() {
         }
         
         // 现在持有 pm_ 锁，并且状态是 SWITCHING_TO_TCLOCK
+        // 确保TLS准备就绪
+        EnsureTLSReady();
+        
         // 先获取 km_ 锁
         komb_api_mutex_lock(km_);
         
@@ -112,18 +124,13 @@ void Mutex::Lock() {
         
         // 释放 pm_ 锁
         pthread_mutex_unlock(&pm_);
-        
-        if (!komb_tls_ready) {
-          PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
-          komb_api_thread_start();
-          komb_tls_ready = true;
-          PthreadCall("set specific", pthread_setspecific(komb_tls_key, reinterpret_cast<void*>(1)));
-        }
       } else {
         PthreadCall("lock", pthread_mutex_lock(&pm_));
       }
     }
     if (b == Backend::TCLOCK) {
+      // 确保TLS准备就绪
+      EnsureTLSReady();
       komb_api_mutex_lock(km_);
       if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
         // 这里是成功获取了 km_ 锁
@@ -178,6 +185,8 @@ bool Mutex::TryLock() {
       fail_cnt_++;
       return false;
     } else if (current == Backend::TCLOCK) {
+      // 确保TLS准备就绪
+      EnsureTLSReady();
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
           // 这里是成功获取了 km_ 锁
@@ -188,7 +197,6 @@ bool Mutex::TryLock() {
       }
       return false;
     }
-    // 如果状态是 SWITCHING_TO_TCLOCK，返回 false
     return false;
   }
 #else
@@ -217,6 +225,8 @@ void CondVar::Wait() {
 #ifdef USE_TCLOCK
   Backend current = mu_->backend_.load(std::memory_order_acquire);
   if (current == Backend::TCLOCK) {
+    // 确保TLS准备就绪
+    EnsureTLSReady();
     PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
   } else if (current == Backend::PTHREAD) {
     PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
@@ -231,6 +241,8 @@ void CondVar::Signal() {
 #ifdef USE_TCLOCK
   Backend current = mu_->backend_.load(std::memory_order_acquire);
   if (current == Backend::TCLOCK) {
+    // 确保TLS准备就绪
+    EnsureTLSReady();
     PthreadCall("signal", komb_api_cond_signal(&kcv_));
   } else if (current == Backend::PTHREAD) {
     PthreadCall("signal", pthread_cond_signal(&cv_));
@@ -245,6 +257,8 @@ void CondVar::SignalAll() {
 #ifdef USE_TCLOCK
   Backend current = mu_->backend_.load(std::memory_order_acquire);
   if (current == Backend::TCLOCK) {
+    // 确保TLS准备就绪
+    EnsureTLSReady();
     PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
   } else if (current == Backend::PTHREAD) {
     PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
