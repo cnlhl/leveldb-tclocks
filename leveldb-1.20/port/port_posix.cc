@@ -57,66 +57,81 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
 #ifdef USE_TCLOCK
-  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
-    
-    if (now_ns - window_start_ns_ > kWindowNs) {
-      window_start_ns_ = now_ns;
-      fail_cnt_ = 0;
-    }
-    
-    if (pthread_mutex_trylock(&pm_) == 0) {
-      return;
-    }
-    
-    fail_cnt_++;
-    
-    if (fail_cnt_ >= kThreshold) {
-      if (km_ == nullptr) {
-        km_ = komb_api_mutex_create(nullptr);
-        if (km_ == nullptr) {
-          // Failed to create TCLock mutex, stay with pthread
-          backend_.store(Backend::PTHREAD, std::memory_order_release);
-          PthreadCall("lock", pthread_mutex_lock(&pm_));
+  while(true){
+    Backend b = backend_.load(std::memory_order_relaxed);
+    if (b == Backend::PTHREAD) {
+      struct timespec now;
+      clock_gettime(CLOCK_MONOTONIC, &now);
+      int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
+      
+      if (now_ns - window_start_ns_ > kWindowNs) {
+        window_start_ns_ = now_ns;
+        fail_cnt_ = 0;
+      }
+      
+      if (pthread_mutex_trylock(&pm_) == 0) {
+        if(backend_.load(std::memory_order_relaxed) == Backend::PTHREAD){
+          // 这里是成功获取了 pm_ 锁
           return;
         }
+        pthread_mutex_unlock(&pm_);
+        continue;
       }
       
-      // 先尝试获取 pm_ 锁
-      PthreadCall("lock", pthread_mutex_lock(&pm_));
+      fail_cnt_++;
       
-      // 使用 CAS 将状态从 PTHREAD 切换到 SWITCHING_TO_TCLOCK
-      Backend expected = Backend::PTHREAD;
-      if (!backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_TCLOCK,
-                                          std::memory_order_acq_rel)) {
-        // 如果状态已经不是 PTHREAD，说明其他线程正在切换，释放 pm_ 并重试
+      if (fail_cnt_ >= kThreshold) {
+        if (km_ == nullptr) {
+          km_ = komb_api_mutex_create(nullptr);
+          if (km_ == nullptr) {
+            // Failed to create TCLock mutex, stay with pthread
+            backend_.store(Backend::PTHREAD, std::memory_order_release);
+            PthreadCall("lock", pthread_mutex_lock(&pm_));
+            return;
+          }
+        }
+        
+        // 先尝试获取 pm_ 锁
+        PthreadCall("lock", pthread_mutex_lock(&pm_));
+        
+        // 使用 CAS 将状态从 PTHREAD 切换到 SWITCHING_TO_TCLOCK
+        Backend expected = Backend::PTHREAD;
+        if (!backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_TCLOCK,
+                                             std::memory_order_acq_rel)) {
+          // 如果状态已经不是 PTHREAD，说明其他线程正在切换，释放 pm_ 并重试
+          pthread_mutex_unlock(&pm_);
+          continue;
+        }
+        
+        // 现在持有 pm_ 锁，并且状态是 SWITCHING_TO_TCLOCK
+        // 先获取 km_ 锁
+        komb_api_mutex_lock(km_);
+        
+        // 将状态切换到 TCLOCK
+        backend_.store(Backend::TCLOCK, std::memory_order_release);
+        
+        // 释放 pm_ 锁
         pthread_mutex_unlock(&pm_);
+        
+        if (!komb_tls_ready) {
+          PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
+          komb_api_thread_start();
+          komb_tls_ready = true;
+          PthreadCall("set specific", pthread_setspecific(komb_tls_key, reinterpret_cast<void*>(1)));
+        }
+      } else {
+        PthreadCall("lock", pthread_mutex_lock(&pm_));
+      }
+    }
+    if (b == Backend::TCLOCK) {
+      komb_api_mutex_lock(km_);
+      if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
+        // 这里是成功获取了 km_ 锁
         return;
       }
-      
-      // 现在持有 pm_ 锁，并且状态是 SWITCHING_TO_TCLOCK
-      // 先获取 km_ 锁
-      komb_api_mutex_lock(km_);
-      
-      // 将状态切换到 TCLOCK
-      backend_.store(Backend::TCLOCK, std::memory_order_release);
-      
-      // 释放 pm_ 锁
-      pthread_mutex_unlock(&pm_);
-      
-      if (!komb_tls_ready) {
-        PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
-        komb_api_thread_start();
-        komb_tls_ready = true;
-        PthreadCall("set specific", pthread_setspecific(komb_tls_key, reinterpret_cast<void*>(1)));
-      }
-    } else {
-      PthreadCall("lock", pthread_mutex_lock(&pm_));
+      komb_api_mutex_unlock(km_);
+      continue;
     }
-  } else {
-    komb_api_mutex_lock(km_);
   }
 #else
   PthreadCall("lock", pthread_mutex_lock(&pm_));
