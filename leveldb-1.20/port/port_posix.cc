@@ -84,13 +84,27 @@ void Mutex::Lock() {
         }
       }
       
-      // Wait for current holder to release
-      while (pthread_mutex_trylock(&pm_) != 0) {
-        // TODO(safety): Handle thread cancellation
-      }
-      pthread_mutex_unlock(&pm_);
+      // 先尝试获取 pm_ 锁
+      PthreadCall("lock", pthread_mutex_lock(&pm_));
       
+      // 使用 CAS 将状态从 PTHREAD 切换到 SWITCHING_TO_TCLOCK
+      Backend expected = Backend::PTHREAD;
+      if (!backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_TCLOCK,
+                                          std::memory_order_acq_rel)) {
+        // 如果状态已经不是 PTHREAD，说明其他线程正在切换，释放 pm_ 并重试
+        pthread_mutex_unlock(&pm_);
+        return;
+      }
+      
+      // 现在持有 pm_ 锁，并且状态是 SWITCHING_TO_TCLOCK
+      // 先获取 km_ 锁
+      komb_api_mutex_lock(km_);
+      
+      // 将状态切换到 TCLOCK
       backend_.store(Backend::TCLOCK, std::memory_order_release);
+      
+      // 释放 pm_ 锁
+      pthread_mutex_unlock(&pm_);
       
       if (!komb_tls_ready) {
         PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
@@ -111,11 +125,13 @@ void Mutex::Lock() {
 
 void Mutex::Unlock() {
 #ifdef USE_TCLOCK
-  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
+  Backend current = backend_.load(std::memory_order_acquire);
+  if (current == Backend::PTHREAD) {
     PthreadCall("unlock", pthread_mutex_unlock(&pm_));
-  } else {
+  } else if (current == Backend::TCLOCK) {
     komb_api_mutex_unlock(km_);
   }
+  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
 #else
   PthreadCall("unlock", pthread_mutex_unlock(&pm_));
 #endif
@@ -123,7 +139,8 @@ void Mutex::Unlock() {
 
 bool Mutex::TryLock() {
 #ifdef USE_TCLOCK
-  if (backend_.load(std::memory_order_relaxed) == Backend::PTHREAD) {
+  Backend current = backend_.load(std::memory_order_acquire);
+  if (current == Backend::PTHREAD) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
@@ -139,9 +156,11 @@ bool Mutex::TryLock() {
     
     fail_cnt_++;
     return false;
-  } else {
+  } else if (current == Backend::TCLOCK) {
     return komb_api_mutex_trylock(km_) == 0;
   }
+  // 如果状态是 SWITCHING_TO_TCLOCK，返回 false
+  return false;
 #else
   return pthread_mutex_trylock(&pm_) == 0;
 #endif
@@ -166,38 +185,43 @@ CondVar::~CondVar() {
 
 void CondVar::Wait() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
-        // 使用 TCLock 的条件变量
-        PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
-    } else {
-        PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
-    }
-#else
+  Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Backend::TCLOCK) {
+    PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
+  } else if (current == Backend::PTHREAD) {
     PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+  }
+  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
+#else
+  PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
 #endif
 }
 
 void CondVar::Signal() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
-        PthreadCall("signal", komb_api_cond_signal(&kcv_));
-    } else {
-        PthreadCall("signal", pthread_cond_signal(&cv_));
-    }
-#else
+  Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Backend::TCLOCK) {
+    PthreadCall("signal", komb_api_cond_signal(&kcv_));
+  } else if (current == Backend::PTHREAD) {
     PthreadCall("signal", pthread_cond_signal(&cv_));
+  }
+  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
+#else
+  PthreadCall("signal", pthread_cond_signal(&cv_));
 #endif
 }
 
 void CondVar::SignalAll() {
 #ifdef USE_TCLOCK
-    if (mu_->backend_.load(std::memory_order_relaxed) == Mutex::Backend::TCLOCK) {
-        PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
-    } else {
-        PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
-    }
-#else
+  Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Backend::TCLOCK) {
+    PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
+  } else if (current == Backend::PTHREAD) {
     PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+  }
+  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
+#else
+  PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
 #endif
 }
 
