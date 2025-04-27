@@ -223,12 +223,12 @@ CondVar::~CondVar() {
 
 void CondVar::Wait() {
 #ifdef USE_TCLOCK
-  Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Backend::TCLOCK) {
+  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Mutex::Backend::TCLOCK) {
     // 确保TLS准备就绪
     EnsureTLSReady();
     PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
-  } else if (current == Backend::PTHREAD) {
+  } else if (current == Mutex::Backend::PTHREAD) {
     PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
   }
   // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
@@ -239,12 +239,12 @@ void CondVar::Wait() {
 
 void CondVar::Signal() {
 #ifdef USE_TCLOCK
-  Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Backend::TCLOCK) {
+  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Mutex::Backend::TCLOCK) {
     // 确保TLS准备就绪
     EnsureTLSReady();
     PthreadCall("signal", komb_api_cond_signal(&kcv_));
-  } else if (current == Backend::PTHREAD) {
+  } else if (current == Mutex::Backend::PTHREAD) {
     PthreadCall("signal", pthread_cond_signal(&cv_));
   }
   // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
@@ -255,12 +255,12 @@ void CondVar::Signal() {
 
 void CondVar::SignalAll() {
 #ifdef USE_TCLOCK
-  Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Backend::TCLOCK) {
+  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+  if (current == Mutex::Backend::TCLOCK) {
     // 确保TLS准备就绪
     EnsureTLSReady();
     PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
-  } else if (current == Backend::PTHREAD) {
+  } else if (current == Mutex::Backend::PTHREAD) {
     PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
   }
   // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
