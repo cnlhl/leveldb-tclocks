@@ -46,9 +46,9 @@ static void EnsureTLSReady() {
 #endif
 
 Mutex::Mutex() {
-  backend_.store(Backend::PTHREAD, std::memory_order_release);
   PthreadCall("init mutex", pthread_mutex_init(&pm_, NULL));
 #ifdef USE_TCLOCK
+  backend_.store(Backend::PTHREAD, std::memory_order_release);
   km_ = nullptr;
   window_start_ns_ = 0;
   fail_cnt_ = 0;
@@ -88,7 +88,7 @@ void Mutex::Lock() {
           fail_cnt_ = 0;
         }
         fail_cnt_++;
-        printf("fail_cnt_ = %ld\n", fail_cnt_.load());
+        // printf("fail_cnt_ = %ld\n", fail_cnt_.load());
         
         if (fail_cnt_ >= kThreshold) {
           if (km_ == nullptr) {
