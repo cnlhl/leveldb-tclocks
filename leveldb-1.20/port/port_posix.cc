@@ -88,6 +88,7 @@ void Mutex::Lock() {
       }
       
       fail_cnt_++;
+      printf("fail_cnt_ = %ld\n", fail_cnt_.load());
       
       if (fail_cnt_ >= kThreshold) {
         if (km_ == nullptr) {
@@ -127,8 +128,9 @@ void Mutex::Lock() {
       } else {
         PthreadCall("lock", pthread_mutex_lock(&pm_));
       }
-    }
-    if (b == Backend::TCLOCK) {
+      // 拿到锁后立刻返回
+      return;
+    }else if (b == Backend::TCLOCK) {
       // 确保TLS准备就绪
       EnsureTLSReady();
       komb_api_mutex_lock(km_);

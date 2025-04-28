@@ -97,6 +97,7 @@ class Mutex {
 #ifdef USE_TCLOCK
   enum class Backend { PTHREAD, SWITCHING_TO_TCLOCK, TCLOCK };
   bool IsUsingTCLock() const { return backend_.load(std::memory_order_acquire) == Backend::TCLOCK; }
+  std::atomic<Backend> backend_;
 #endif
 
  private:
@@ -104,8 +105,7 @@ class Mutex {
   
   static const int64_t kWindowNs = 5000000;  // 5 ms
   static const int kThreshold = 32;
-  
-  std::atomic<Backend> backend_;
+
   pthread_mutex_t pm_;
 #ifdef USE_TCLOCK
   komb_mutex_t* km_;
