@@ -67,13 +67,13 @@ Mutex::~Mutex() {
 void Mutex::Lock() {
 #ifdef USE_TCLOCK
   while(true){
-    Backend b = backend_.load(std::memory_order_relaxed);
+    Backend b = backend_.load(std::memory_order_acquire);
     if (b == Backend::PTHREAD) {
       struct timespec now;
       clock_gettime(CLOCK_MONOTONIC, &now);
       
       if (pthread_mutex_trylock(&pm_) == 0) {
-        if(backend_.load(std::memory_order_relaxed) == Backend::PTHREAD){
+        if(backend_.load(std::memory_order_acquire) == Backend::PTHREAD){
           // 这里是成功获取了 pm_ 锁
           return;
         }
@@ -127,6 +127,11 @@ void Mutex::Lock() {
           pthread_mutex_unlock(&pm_);
         } else {
           PthreadCall("lock", pthread_mutex_lock(&pm_));
+          if (backend_.load(std::memory_order_acquire) == Backend::PTHREAD) {
+            return;
+          }
+          pthread_mutex_unlock(&pm_);
+          continue;
         }
       }
       // 拿到锁后立刻返回
@@ -135,7 +140,7 @@ void Mutex::Lock() {
       // 确保TLS准备就绪
       EnsureTLSReady();
       komb_api_mutex_lock(km_);
-      if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
+      if(backend_.load(std::memory_order_acquired) == Backend::TCLOCK){
         // 这里是成功获取了 km_ 锁
         return;
       }
@@ -154,6 +159,8 @@ void Mutex::Unlock() {
   if (current == Backend::PTHREAD) {
     PthreadCall("unlock", pthread_mutex_unlock(&pm_));
   } else if (current == Backend::TCLOCK) {
+    // 确保TLS准备就绪
+    EnsureTLSReady();
     komb_api_mutex_unlock(km_);
   }
   // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
@@ -177,7 +184,7 @@ bool Mutex::TryLock() {
       }
       
       if (pthread_mutex_trylock(&pm_) == 0) {
-        if(backend_.load(std::memory_order_relaxed) == Backend::PTHREAD){
+        if(backend_.load(std::memory_order_acquire) == Backend::PTHREAD){
           // 这里是成功获取了 pm_ 锁
           return true;
         }
@@ -191,7 +198,7 @@ bool Mutex::TryLock() {
       // 确保TLS准备就绪
       EnsureTLSReady();
       if (komb_api_mutex_trylock(km_) == 0) {
-        if(backend_.load(std::memory_order_relaxed) == Backend::TCLOCK){
+        if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
           // 这里是成功获取了 km_ 锁
           return true;
         }
