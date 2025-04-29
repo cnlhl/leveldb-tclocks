@@ -9,7 +9,7 @@
 # (A) Production use (optimized mode)
 # OPT ?= -O2 -DNDEBUG
 # (B) Debug mode, w/ full line-level debugging symbols
-OPT ?= -g2
+OPT ?= -g2 -O0
 # (C) Profiling mode: opt, but w/debugging symbols
 # OPT ?= -O2 -g2 -DNDEBUG
 #-----------------------------------------------
@@ -26,7 +26,6 @@ ifeq ($(USE_TCLOCK),1)
   ifdef LITL_DIR
     CFLAGS += -I$(LITL_DIR)/include
     CXXFLAGS += -I$(LITL_DIR)/include
-    LDFLAGS += -L$(LITL_DIR)/lib
   endif
   LIBS += -lkomb_api
 endif

@@ -189,6 +189,8 @@ static __always_inline void check_and_set_combiner(komb_mutex_t *lock) {
     while (true) {
         smp_cond_load_relaxed(&lock->locked, !(VAL));
 
+        // printf("Thread %d: check_and_set_combiner: %d\n", cur_thread_id,lock->locked);
+
         //BUG_ON(lock->locked != 0);
 
         if (smp_cas(&lock->locked, 0, _Q_LOCKED_COMBINER_VAL) == 0)

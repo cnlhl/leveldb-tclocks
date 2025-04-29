@@ -103,7 +103,7 @@ class Mutex {
  private:
   friend class CondVar;
   
-  static const int64_t kWindowNs = 5000000;  // 5 ms
+  static const int64_t kWindowNs = 20000000;  // 5 ms
   static const int kThreshold = 32;
 
   pthread_mutex_t pm_;

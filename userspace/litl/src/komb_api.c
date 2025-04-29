@@ -1,12 +1,12 @@
 #include <komb_api.h>
 #include "kombmtx.h"
 #include <pthread.h>
+#include <stdio.h>
 
 unsigned int last_thread_id;
 __thread unsigned int cur_thread_id;
 
 komb_mutex_t* komb_api_mutex_create(pthread_mutexattr_t *attr) {
-    cur_thread_id = __sync_fetch_and_add(&last_thread_id, 1);
     return komb_mutex_create(attr);
 }
 
@@ -15,6 +15,7 @@ int komb_api_mutex_destroy(komb_mutex_t *mutex) {
 }
 
 int komb_api_mutex_lock(komb_mutex_t *mutex) {
+    // printf("thread %u try to lock\n", cur_thread_id);
     return komb_mutex_lock(mutex, NULL);
 }
 
@@ -23,6 +24,7 @@ int komb_api_mutex_trylock(komb_mutex_t *mutex) {
 }
 
 void komb_api_mutex_unlock(komb_mutex_t *mutex) {
+    // printf("thread %u unlock\n", cur_thread_id);
     komb_mutex_unlock(mutex, NULL);
 }
 
@@ -48,9 +50,12 @@ int komb_api_cond_destroy(komb_cond_t *cond) {
 }
 
 void komb_api_thread_start(void) {
+    cur_thread_id = __sync_fetch_and_add(&last_thread_id, 1);
+    // printf("thread %u start\n", cur_thread_id);
     komb_thread_start();
 }
 
 void komb_api_thread_exit(void) {
+    // printf("thread %u exit\n", cur_thread_id);
     komb_thread_exit();
 } 
