@@ -17,7 +17,7 @@ void* thread_func(void* arg) {
     // 初始化线程上下文
     komb_api_thread_start();
     
-    printf("Thread %d started\n", thread_id);
+    // printf("Thread %d started\n", thread_id);
     
     for (int i = 0; i < NUM_ITERATIONS; i++) {
         // 使用komb锁保护临界区

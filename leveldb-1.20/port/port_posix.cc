@@ -140,7 +140,7 @@ void Mutex::Lock() {
       // 确保TLS准备就绪
       EnsureTLSReady();
       komb_api_mutex_lock(km_);
-      if(backend_.load(std::memory_order_acquired) == Backend::TCLOCK){
+      if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
         // 这里是成功获取了 km_ 锁
         return;
       }
