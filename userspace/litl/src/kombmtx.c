@@ -18,7 +18,7 @@
 #pragma GCC push_options
 #pragma GCC optimize("O3")
 
-//#define WAITER_DEBUG
+#define WAITER_DEBUG
 
 /* debugging */
 #ifdef WAITER_DEBUG
