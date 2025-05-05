@@ -51,7 +51,7 @@ int komb_api_cond_destroy(komb_cond_t *cond) {
 
 void komb_api_thread_start(void) {
     cur_thread_id = __sync_fetch_and_add(&last_thread_id, 1);
-    printf("thread %u start\n", cur_thread_id);
+    // printf("thread %u start\n", cur_thread_id);
     komb_thread_start();
 }
 

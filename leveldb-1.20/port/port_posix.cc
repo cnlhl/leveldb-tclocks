@@ -48,8 +48,8 @@ static void EnsureTLSReady() {
 Mutex::Mutex() {
   PthreadCall("init mutex", pthread_mutex_init(&pm_, NULL));
 #ifdef USE_TCLOCK
+  km_ = komb_api_mutex_create(NULL);
   backend_.store(Backend::PTHREAD, std::memory_order_release);
-  km_ = nullptr;
   window_start_ns_ = 0;
   fail_cnt_ = 0;
 #endif
@@ -91,15 +91,6 @@ void Mutex::Lock() {
         // printf("fail_cnt_ = %ld\n", fail_cnt_.load());
         
         if (fail_cnt_ >= kThreshold) {
-          if (km_ == nullptr) {
-            km_ = komb_api_mutex_create(nullptr);
-            if (km_ == nullptr) {
-              // Failed to create TCLock mutex, stay with pthread
-              backend_.store(Backend::PTHREAD, std::memory_order_release);
-              PthreadCall("lock", pthread_mutex_lock(&pm_));
-              return;
-            }
-          }
           
           // 先尝试获取 pm_ 锁
           PthreadCall("lock", pthread_mutex_lock(&pm_));

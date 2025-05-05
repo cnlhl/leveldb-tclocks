@@ -18,7 +18,7 @@
 #pragma GCC push_options
 #pragma GCC optimize("O3")
 
-#define WAITER_DEBUG
+// #define WAITER_DEBUG
 
 /* debugging */
 #ifdef WAITER_DEBUG
@@ -339,8 +339,7 @@ run_combiner(komb_mutex_t *lock, komb_node_t *curr_node) {
 
     counter_val = 0;
 
-    dprintf("Combiner %d giving control to %d\n", cur_thread_id,
-            curr_node->cpuid);
+    dprintf("Combiner %d giving control to %d\n", cur_thread_id,curr_node->cpuid);
 
     execute_cs(lock, curr_node);
 
@@ -574,6 +573,7 @@ release:
 }
 
 int komb_mutex_lock(komb_mutex_t *impl, komb_node_t *UNUSED(me)) {
+    // dprintf("Thread %d: komb_mutex_lock %p\n", cur_thread_id, impl);
     komb_node_t node;
     int ret = __komb_mutex_lock(impl, &node);
     assert(ret == 0);
