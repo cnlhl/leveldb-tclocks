@@ -95,22 +95,25 @@ class Mutex {
   void AssertHeld() { }
   
 #ifdef USE_TCLOCK
-  enum class Backend { PTHREAD, SWITCHING_TO_TCLOCK, TCLOCK };
+  enum class Backend { PTHREAD, SWITCHING_TO_TCLOCK, TCLOCK, SWITCHING_TO_PTHREAD };
   bool IsUsingTCLock() const { return backend_.load(std::memory_order_acquire) == Backend::TCLOCK; }
   std::atomic<Backend> backend_;
 #endif
 
  private:
   friend class CondVar;
-  
-  static const int64_t kWindowNs = 20000000;  // 5 ms
-  static const int kThreshold = 32;
-
   pthread_mutex_t pm_;
 #ifdef USE_TCLOCK
   komb_mutex_t* km_;
   std::atomic<int64_t> window_start_ns_;
   std::atomic<int64_t> fail_cnt_;
+  std::atomic<int64_t> success_window_start_ns_;
+  std::atomic<int64_t> success_cnt_;
+
+  static const int64_t kWindowNs = 20000000;  // 
+  static const int kThreshold = 32;
+  static const int kBackToThreadThreshold = 100; // 
+  static const int64_t kBackWindowNs = 100000000; 
 #endif
 
   // No copying
