@@ -2,6 +2,7 @@
     "files.associations": {
         "random": "cpp",
         "atomic": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ratio": "c"
     }
 }

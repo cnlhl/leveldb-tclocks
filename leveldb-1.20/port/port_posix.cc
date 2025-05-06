@@ -155,6 +155,7 @@ void Mutex::Lock() {
       if (backend_.load(std::memory_order_acquire) == Backend::SWITCHING_TO_PTHREAD) {
         while(komb_api_mutex_trylock(km_) != 0){
           // 等待 km_ 锁释放
+          std::this_thread::yield();
         }
         backend_.store(Backend::PTHREAD, std::memory_order_release);
         printf("Switching to PTHREAD\n");

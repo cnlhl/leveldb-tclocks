@@ -45,6 +45,7 @@
 #include <stdint.h>
 #include <string>
 #include <atomic>
+#include <thread>
 #include "port/atomic_pointer.h"
 
 #ifdef USE_TCLOCK
@@ -112,8 +113,8 @@ class Mutex {
 
   static const int64_t kWindowNs = 20000000;  // 
   static const int kThreshold = 32;
-  static const int kBackToThreadThreshold = 10000; // 
-  static const int64_t kBackWindowNs = 100000000; 
+  static const int kBackToThreadThreshold = 256; // 
+  static const int64_t kBackWindowNs = 100000; 
 #endif
 
   // No copying
