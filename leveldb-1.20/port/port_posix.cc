@@ -176,14 +176,11 @@ void Mutex::Unlock() {
   Backend current = backend_.load(std::memory_order_acquire);
   if (current == Backend::PTHREAD) {
     PthreadCall("unlock", pthread_mutex_unlock(&pm_));
-  } else if (current == Backend::TCLOCK) {
+  } else if (current == Backend::TCLOCK ||current == Backend::SWITCHING_TO_PTHREAD) {
     // 确保TLS准备就绪
     EnsureTLSReady();
     komb_api_mutex_unlock(km_);
-  }else if (current == Backend::SWITCHING_TO_PTHREAD) {
-    EnsureTLSReady();
-    komb_api_mutex_unlock(km_);
-  }    
+  }
 
 #else
   PthreadCall("unlock", pthread_mutex_unlock(&pm_));
@@ -203,7 +200,6 @@ bool Mutex::TryLock() {
         window_start_ns_ = now_ns;
         fail_cnt_ = 0;
       }
-      
       if (pthread_mutex_trylock(&pm_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::PTHREAD){
           // 核对锁类型正确
@@ -212,7 +208,6 @@ bool Mutex::TryLock() {
         pthread_mutex_unlock(&pm_);
         continue;
       }
-      
       fail_cnt_++;
       return false;
     } else if (current == Backend::TCLOCK) {
@@ -225,31 +220,14 @@ bool Mutex::TryLock() {
             success_cnt_ = 0;
           }
           success_cnt_++;
-          if(success_cnt_ >= kBackToThreadThreshold){
-            backend_.store(Backend::SWITCHING_TO_PTHREAD, std::memory_order_release);
-          }
           return true;
         }
         komb_api_mutex_unlock(km_);
         continue;
       }
       return false;
-    }else if (current == Backend::SWITCHING_TO_PTHREAD) {
-      if(pthread_mutex_trylock(&pm_) == 0) {
-        if (backend_.load(std::memory_order_acquire) == Backend::SWITCHING_TO_PTHREAD) {
-          while(komb_api_mutex_trylock(km_) != 0){
-            // 等待 km_ 锁释放
-          }
-          backend_.store(Backend::PTHREAD, std::memory_order_release);
-          // 释放 km_ 锁
-          komb_api_mutex_unlock(km_);
-          return true;
-        }
-        pthread_mutex_unlock(&pm_);
-        continue;
-      }
-      return false;
     }
+    // 两个方向的切换中间态都涉及忙等某个锁，有悖trylock的逻辑初衷，故直接返回失败
     return false;
   }
 #else

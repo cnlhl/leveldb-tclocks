@@ -112,7 +112,7 @@ class Mutex {
 
   static const int64_t kWindowNs = 20000000;  // 
   static const int kThreshold = 32;
-  static const int kBackToThreadThreshold = 100; // 
+  static const int kBackToThreadThreshold = 10000; // 
   static const int64_t kBackWindowNs = 100000000; 
 #endif
 
