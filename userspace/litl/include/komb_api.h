@@ -91,6 +91,12 @@ void komb_api_thread_start(void);
  */
 void komb_api_thread_exit(void);
 
+/**
+ * @brief 获取当前活动线程的数量
+ * @return 当前活动线程的数量
+ */
+unsigned int komb_api_get_active_threads_count(void);
+
 #ifdef __cplusplus
 }
 #endif

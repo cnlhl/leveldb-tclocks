@@ -26,6 +26,9 @@ void* thread_func(void* arg) {
         komb_api_mutex_unlock(counter_lock);
     }
     
+    unsigned int threads_cnt = komb_api_get_active_threads_count();
+    printf("Thread %d: active threads count = %u\n", thread_id, threads_cnt);
+    
     printf("Thread %d finished\n", thread_id);
     
     // 清理线程上下文

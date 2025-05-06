@@ -2,9 +2,12 @@
 #include "kombmtx.h"
 #include <pthread.h>
 #include <stdio.h>
+#include <stdatomic.h>
 
 unsigned int last_thread_id;
 __thread unsigned int cur_thread_id;
+
+static atomic_uint g_komb_active_threads_count = 0;
 
 komb_mutex_t* komb_api_mutex_create(pthread_mutexattr_t *attr) {
     return komb_mutex_create(attr);
@@ -52,10 +55,16 @@ int komb_api_cond_destroy(komb_cond_t *cond) {
 void komb_api_thread_start(void) {
     cur_thread_id = __sync_fetch_and_add(&last_thread_id, 1);
     // printf("thread %u start\n", cur_thread_id);
+    atomic_fetch_add_explicit(&g_komb_active_threads_count, 1, memory_order_relaxed);
     komb_thread_start();
 }
 
 void komb_api_thread_exit(void) {
     // printf("thread %u exit\n", cur_thread_id);
+    atomic_fetch_sub_explicit(&g_komb_active_threads_count, 1, memory_order_relaxed);
     komb_thread_exit();
 } 
+
+unsigned int komb_api_get_active_threads_count(void) {
+    return atomic_load_explicit(&g_komb_active_threads_count, memory_order_relaxed);
+}

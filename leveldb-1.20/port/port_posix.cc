@@ -50,8 +50,12 @@ Mutex::Mutex() {
 #ifdef USE_TCLOCK
   km_ = komb_api_mutex_create(NULL);
   backend_.store(Backend::PTHREAD, std::memory_order_release);
-  window_start_ns_ = 0;
-  fail_cnt_ = 0;
+  window_start_ns_.store(0, std::memory_order_release);
+  fail_cnt_.store(0, std::memory_order_release);
+  consecutive_fail_windows_cnt_.store(0, std::memory_order_release);
+  success_window_start_ns_. store(0, std::memory_order_release);
+  success_cnt_.store(0, std::memory_order_release);
+  consecutive_success_windows_cnt_.store(0, std::memory_order_release);
 #endif
 }
 
@@ -80,20 +84,30 @@ void Mutex::Lock() {
         pthread_mutex_unlock(&pm_);
         continue;
       } else {
+        int64_t current_window_start = window_start_ns_.load(std::memory_order_acquire);
+        bool initiate_switch = false;
         // 获取 pm_ 锁失败，进入失败路径，只在失败路径下走窗口统计逻辑
-        if (now_ns - window_start_ns_ > kWindowNs) {
-          window_start_ns_ = now_ns;
-          fail_cnt_ = 0;
+        if (now_ns - current_window_start > kWindowNs) {
+
+          if(window_start_ns_.compare_exchange_strong(current_window_start, now_ns, std::memory_order_acq_rel)) {
+            int64_t finished_window_fail_cnt = fail_cnt_.exchange(0, std::memory_order_acq_rel);
+            if(finished_window_fail_cnt >= kThreshold) {
+              int current_fail_windows_cnt = consecutive_fail_windows_cnt_.fetch_add(1, std::memory_order_acq_rel);
+              if(current_fail_windows_cnt >= consecutive_fail_windows_threshold){
+                initiate_switch = true;
+                consecutive_fail_windows_cnt_.store(0, std::memory_order_release);
+              }
+            }else{
+              consecutive_fail_windows_cnt_.store(0, std::memory_order_release);
+            }
+            // 成功更新窗口起始时间
+          }
         }
-        fail_cnt_++;
+        fail_cnt_.fetch_add(1, std::memory_order_relaxed);
         // printf("fail_cnt_ = %ld\n", fail_cnt_.load());
         
-        if (fail_cnt_ >= kThreshold) {
-          
-          // 先尝试获取 pm_ 锁
+        if (initiate_switch) {
           PthreadCall("lock", pthread_mutex_lock(&pm_));
-          
-          // 使用 CAS 将状态从 PTHREAD 切换到 SWITCHING_TO_TCLOCK
           Backend expected = Backend::PTHREAD;
           if (!backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_TCLOCK,
                                                std::memory_order_acq_rel)) {
@@ -130,26 +144,44 @@ void Mutex::Lock() {
       EnsureTLSReady();
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
-          if(now_ns - success_window_start_ns_ > kBackWindowNs){
-            success_window_start_ns_ = now_ns;
-            success_cnt_ = 0;
+          int64_t current_window_start = success_window_start_ns_.load(std::memory_order_acquire);
+          bool initiate_back_switch = false;
+          if(now_ns - current_window_start > kBackWindowNs){
+            if(success_window_start_ns_.compare_exchange_strong(current_window_start, now_ns, std::memory_order_acq_rel)){
+              int64_t finished_window_success_cnt = success_cnt_.exchange(0, std::memory_order_acq_rel);
+              if(finished_window_success_cnt >= kBackToThreadThreshold){
+                int current_success_windows_cnt = consecutive_success_windows_cnt_.fetch_add(1, std::memory_order_acq_rel);
+                if(current_success_windows_cnt >= consecutive_success_windows_threshold){
+                  initiate_back_switch = true;
+                  consecutive_success_windows_cnt_.store(0, std::memory_order_release);
+                }
+              }else{
+                consecutive_success_windows_cnt_.store(0, std::memory_order_release);
+              }
+            }
           }
-          success_cnt_++;
-          if(success_cnt_ >= kBackToThreadThreshold){
-            backend_.store(Backend::SWITCHING_TO_PTHREAD, std::memory_order_release);
+          success_cnt_.fetch_add(1, std::memory_order_relaxed);
+          if(initiate_back_switch){
+            Backend expected = Backend::TCLOCK;
+            if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
+              printf("start switching to PTHREAD\n"); 
+            }
           }
           return;
+        }else{
+          komb_api_mutex_unlock(km_);
+          continue;
         }
-        komb_api_mutex_unlock(km_);
-        continue;
+      }else{
+        komb_api_mutex_lock(km_);
+        if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
+          // 核对锁类型正确
+          return;
+        }else{
+          komb_api_mutex_unlock(km_);
+          continue;
+        }
       }
-      komb_api_mutex_lock(km_);
-      if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
-        // 核对锁类型正确
-        return;
-      }
-      komb_api_mutex_unlock(km_);
-      continue;
     }else if (b == Backend::SWITCHING_TO_PTHREAD) {
       PthreadCall("lock", pthread_mutex_lock(&pm_));
       if (backend_.load(std::memory_order_acquire) == Backend::SWITCHING_TO_PTHREAD) {
@@ -164,6 +196,9 @@ void Mutex::Lock() {
         return;
       }
       pthread_mutex_unlock(&pm_);
+      continue;
+    }else if(b == Backend::SWITCHING_TO_TCLOCK) {
+      std::this_thread::yield();
       continue;
     }
   }

@@ -49,8 +49,8 @@ TEST(MutexTClockTest, HighContention) {
   
   // 检查是否切换到了 TCLock
 #ifdef USE_TCLOCK
-  // ASSERT_TRUE(IsUsingTCLock(mu));
-  // std::cout << "Successfully switched to TCLock backend" << std::endl;
+  ASSERT_TRUE(IsUsingTCLock(mu));
+  std::cout << "Successfully switched to TCLock backend" << std::endl;
 #else
   ASSERT_TRUE(!IsUsingTCLock(mu));
   std::cout << "Using pthread backend (TCLock not enabled)" << std::endl;

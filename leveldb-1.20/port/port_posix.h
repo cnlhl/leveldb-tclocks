@@ -108,13 +108,18 @@ class Mutex {
   komb_mutex_t* km_;
   std::atomic<int64_t> window_start_ns_;
   std::atomic<int64_t> fail_cnt_;
+  std::atomic<int64_t> consecutive_fail_windows_cnt_;
   std::atomic<int64_t> success_window_start_ns_;
   std::atomic<int64_t> success_cnt_;
+  std::atomic<int64_t> consecutive_success_windows_cnt_;
 
-  static const int64_t kWindowNs = 20000000;  // 
+  static const int64_t kWindowNs = 2000000;  // 
   static const int kThreshold = 32;
   static const int kBackToThreadThreshold = 256; // 
-  static const int64_t kBackWindowNs = 100000; 
+  static const int64_t kBackWindowNs = 25000; 
+
+  static const int consecutive_fail_windows_threshold = 5;
+  static const int consecutive_success_windows_threshold = 5;
 #endif
 
   // No copying
