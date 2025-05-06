@@ -120,6 +120,8 @@ class Mutex {
 
   static const int consecutive_fail_windows_threshold = 5;
   static const int consecutive_success_windows_threshold = 5;
+
+  static const int kForcePthreadActiveThreadThreshold = 4;
 #endif
 
   // No copying

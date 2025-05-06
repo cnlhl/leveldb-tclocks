@@ -3,6 +3,7 @@
         "random": "cpp",
         "atomic": "cpp",
         "iostream": "cpp",
-        "ratio": "c"
+        "ratio": "c",
+        "cstdlib": "cpp"
     }
 }

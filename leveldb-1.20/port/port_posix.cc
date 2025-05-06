@@ -70,6 +70,8 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
 #ifdef USE_TCLOCK
+  // 确保TLS准备就绪
+  EnsureTLSReady();
   while(true){
     Backend b = backend_.load(std::memory_order_acquire);
     struct timespec now;
@@ -117,9 +119,6 @@ void Mutex::Lock() {
           }
           
           // 现在持有 pm_ 锁，并且状态是 SWITCHING_TO_TCLOCK
-          // 确保TLS准备就绪
-          EnsureTLSReady();
-          
           // 先获取 km_ 锁
           komb_api_mutex_lock(km_);
           
@@ -140,8 +139,21 @@ void Mutex::Lock() {
       }
       return;
     }else if (b == Backend::TCLOCK) {
-      // 确保TLS准备就绪
-      EnsureTLSReady();
+      unsigned int active_komb_threads = komb_api_get_active_threads_count();
+      bool force_switch = (active_komb_threads < kForcePthreadActiveThreadThreshold);
+
+      if (force_switch) {
+        Backend expected = Backend::TCLOCK;
+        if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
+            printf("Switching to PTHREAD (forced by low active_komb_threads: %u)\n", active_komb_threads);
+            consecutive_success_windows_cnt_.store(0, std::memory_order_release);
+            success_cnt_.store(0, std::memory_order_release);
+            continue;
+        } else {
+            continue;
+        }
+    }
+
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
           int64_t current_window_start = success_window_start_ns_.load(std::memory_order_acquire);
