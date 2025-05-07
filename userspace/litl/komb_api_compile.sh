@@ -9,3 +9,5 @@ sudo ldconfig
 
 # 编译示例程序，链接共享库
 gcc -g -O0 examples/komb_example.c -o komb_example -I./include -L/usr/local/lib -lkomb_api -lpthread
+
+gcc -g -O0 examples/rate_profiler.c -o rate_profiler -I./include -L/usr/local/lib -lkomb_api -lpthread
