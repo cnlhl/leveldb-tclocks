@@ -30,6 +30,13 @@ ifeq ($(USE_TCLOCK),1)
   LIBS += -lkomb_api
 endif
 
+# 添加LEVELDB_TESTS支持
+LEVELDB_TESTS ?= 0
+ifeq ($(LEVELDB_TESTS),1)
+  CFLAGS += -DLEVELDB_TESTS
+  CXXFLAGS += -DLEVELDB_TESTS
+endif
+
 TESTS = \
 	db/autocompact_test \
 	db/c_test \
