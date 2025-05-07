@@ -57,6 +57,9 @@ Mutex::Mutex() {
   success_cnt_.store(0, std::memory_order_release);
   consecutive_success_windows_cnt_.store(0, std::memory_order_release);
 #endif
+#if defined(LEVELDB_TESTS) && defined(USE_TCLOCK) 
+  Test_ResetSwitchCounters();
+#endif
 }
 
 Mutex::~Mutex() {
@@ -124,6 +127,9 @@ void Mutex::Lock() {
           
           // 将状态切换到 TCLOCK
           backend_.store(Backend::TCLOCK, std::memory_order_release);
+#ifdef LEVELDB_TESTS
+          test_switch_to_tclock_count_.fetch_add(1, std::memory_order_relaxed);
+#endif
           printf("Switching to TCLOCK\n");
           
           // 释放 pm_ 锁
@@ -142,17 +148,17 @@ void Mutex::Lock() {
       unsigned int active_komb_threads = komb_api_get_active_threads_count();
       bool force_switch = (active_komb_threads < kForcePthreadActiveThreadThreshold);
 
-      if (force_switch) {
-        Backend expected = Backend::TCLOCK;
-        if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
-            printf("Switching to PTHREAD (forced by low active_komb_threads: %u)\n", active_komb_threads);
-            consecutive_success_windows_cnt_.store(0, std::memory_order_release);
-            success_cnt_.store(0, std::memory_order_release);
-            continue;
-        } else {
-            continue;
-        }
-    }
+      // if (force_switch) {
+      //   Backend expected = Backend::TCLOCK;
+      //   if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
+      //       printf("Switching to PTHREAD (forced by low active_komb_threads: %u)\n", active_komb_threads);
+      //       consecutive_success_windows_cnt_.store(0, std::memory_order_release);
+      //       success_cnt_.store(0, std::memory_order_release);
+      //       continue;
+      //   } else {
+      //       continue;
+      //   }
+      // }
 
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
@@ -203,6 +209,9 @@ void Mutex::Lock() {
         }
         backend_.store(Backend::PTHREAD, std::memory_order_release);
         printf("Switching to PTHREAD\n");
+#ifdef LEVELDB_TESTS
+        test_switch_to_pthread_count_.fetch_add(1, std::memory_order_relaxed);
+#endif
         // 释放 km_ 锁
         komb_api_mutex_unlock(km_);
         return;

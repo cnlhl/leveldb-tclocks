@@ -95,6 +95,17 @@ class Mutex {
   bool TryLock();
   void AssertHeld() { }
   
+#if defined(USE_TCLOCK) && defined(LEVELDB_TESTS) // 只在测试时编译这些
+    static std::atomic<int> test_switch_to_tclock_count_;
+    static std::atomic<int> test_switch_to_pthread_count_;
+    static void Test_ResetSwitchCounters() {
+        test_switch_to_tclock_count_.store(0);
+        test_switch_to_pthread_count_.store(0);
+    }
+    static int Test_GetSwitchToTClockCount() { return test_switch_to_tclock_count_.load(); }
+    static int Test_GetSwitchToPThreadCount() { return test_switch_to_pthread_count_.load(); }
+#endif
+
 #ifdef USE_TCLOCK
   enum class Backend { PTHREAD, SWITCHING_TO_TCLOCK, TCLOCK, SWITCHING_TO_PTHREAD };
   bool IsUsingTCLock() const { return backend_.load(std::memory_order_acquire) == Backend::TCLOCK; }

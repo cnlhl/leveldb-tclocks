@@ -4,6 +4,7 @@
         "atomic": "cpp",
         "iostream": "cpp",
         "ratio": "c",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 
 namespace leveldb {
 namespace port {
@@ -28,11 +29,13 @@ TEST(MutexTClockTest, HighContention) {
   Mutex mu;
   std::atomic<int> counter(0);
   const int kNumThreads = 8;
-  const int kNumIterations = 10000;
+  const int kNumIterations = 2000000;
   std::vector<std::thread> threads;
   
   // 初始应该是 pthread 后端
   ASSERT_TRUE(!IsUsingTCLock(mu));
+
+  auto start_time = std::chrono::high_resolution_clock::now();
   
   for (int i = 0; i < kNumThreads; i++) {
     threads.emplace_back([&]() {
@@ -59,9 +62,20 @@ TEST(MutexTClockTest, HighContention) {
   for (auto& t : threads) {
     t.join();
   }
+
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> duration_ms = end_time - start_time;
   
-  ASSERT_EQ(counter, kNumThreads * kNumIterations);
-  printf("Final counter value: %d\n", counter.load());
+  ASSERT_EQ(counter, (long long)kNumThreads * kNumIterations);
+  long long final_counter_value = counter.load();
+  std::cout << "  Test duration: " << std::fixed << std::setprecision(2) << duration_ms.count() << " ms" << std::endl;
+  std::cout << "  Throughput: " << std::fixed << std::setprecision(2) 
+            << (final_counter_value / (duration_ms.count() / 1000.0)) / 1e6 << " M ops/sec" << std::endl;
+#ifdef USE_TCLOCK
+  std::cout << "  Switch to TCLock count: " << Mutex::Test_GetSwitchToTClockCount() << std::endl;
+  std::cout << "  Switch to pthread count: " << Mutex::Test_GetSwitchToPThreadCount() << std::endl;
+#endif
+  std::cout << "  Final counter value: " << final_counter_value << std::endl;
 }
 
 TEST(MutexTClockTest, LowContention) {
