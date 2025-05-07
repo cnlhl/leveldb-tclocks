@@ -13,6 +13,11 @@
 namespace leveldb {
 namespace port {
 
+#if defined(USE_TCLOCK) && defined(LEVELDB_TESTS)
+std::atomic<int> Mutex::test_switch_to_tclock_count_{0};
+std::atomic<int> Mutex::test_switch_to_pthread_count_{0};
+#endif
+
 static void PthreadCall(const char* label, int result) {
   if (result != 0) {
     fprintf(stderr, "pthread %s: %s\n", label, strerror(result));
