@@ -124,13 +124,13 @@ class Mutex {
   std::atomic<int64_t> success_cnt_;
   std::atomic<int64_t> consecutive_success_windows_cnt_;
 
-  static const int64_t kWindowNs = 2000000;  // 
-  static const int kThreshold = 32;
-  static const int kBackToThreadThreshold = 256; // 
-  static const int64_t kBackWindowNs = 25000; 
+  static const int64_t kWindowNs = 24000000;  //24ms 
+  static const int kThreshold = 12000;
+  static const int kBackToThreadThreshold = 60000; // 
+  static const int64_t kBackWindowNs = 6000000; 
 
-  static const int consecutive_fail_windows_threshold = 5;
-  static const int consecutive_success_windows_threshold = 5;
+  static const int consecutive_fail_windows_threshold = 2;
+  static const int consecutive_success_windows_threshold = 8;
 
   static const int kForcePthreadActiveThreadThreshold = 4;
 #endif

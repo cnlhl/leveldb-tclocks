@@ -127,7 +127,7 @@ double run_test(int num_threads, int use_komb) {
 }
 
 int main() {
-    int thread_counts[] = {2, 3, 4,5,6};
+    int thread_counts[] = {2, 3, 4, 5, 6 , 7, 8, 9, 10, 12, 16, 20, 24, 32, 40, 48};
     int num_thread_options = sizeof(thread_counts) / sizeof(thread_counts[0]);
 
     printf("Starting benchmark with %d operations per thread.\n", NUM_OPERATIONS);

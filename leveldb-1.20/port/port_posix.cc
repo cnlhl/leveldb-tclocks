@@ -8,10 +8,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/syscall.h>
+#include <unistd.h> 
 
 
 namespace leveldb {
 namespace port {
+
+#define LOG(...) do { \
+  fprintf(stderr, "[TID %ld] ", syscall(SYS_gettid)); \
+  fprintf(stderr, __VA_ARGS__); \
+  fprintf(stderr, "\n"); \
+  fflush(stderr); \
+} while (0)
 
 #if defined(USE_TCLOCK) && defined(LEVELDB_TESTS)
 std::atomic<int> Mutex::test_switch_to_tclock_count_{0};
@@ -26,6 +35,7 @@ static void PthreadCall(const char* label, int result) {
 }
 
 #ifdef USE_TCLOCK
+auto start_switch_to_pthread_time = std::chrono::high_resolution_clock::now();
 static pthread_once_t komb_tls_once = PTHREAD_ONCE_INIT;
 static pthread_key_t komb_tls_key;
 
@@ -42,6 +52,7 @@ static void InitKombTlsKey() {
 static void EnsureTLSReady() {
   static thread_local bool ready = false;
   if (!ready) {
+    // LOG("Initializing TLS for thread %ld", syscall(SYS_gettid));
     PthreadCall("once", pthread_once(&komb_tls_once, InitKombTlsKey));
     komb_api_thread_start();
     ready = true;
@@ -78,6 +89,7 @@ Mutex::~Mutex() {
 
 void Mutex::Lock() {
 #ifdef USE_TCLOCK
+  // LOG("Locking mutex, backend: %s", backend_.load(std::memory_order_acquire));
   // 确保TLS准备就绪
   EnsureTLSReady();
   while(true){
@@ -87,6 +99,7 @@ void Mutex::Lock() {
     int64_t now_ns = now.tv_sec * 1000000000LL + now.tv_nsec;
 
     if (b == Backend::PTHREAD) {
+      // LOG("PTHREAD backend");
       if (pthread_mutex_trylock(&pm_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::PTHREAD){
           return;
@@ -117,6 +130,7 @@ void Mutex::Lock() {
         // printf("fail_cnt_ = %ld\n", fail_cnt_.load());
         
         if (initiate_switch) {
+          auto start_switch_time = std::chrono::high_resolution_clock::now();
           PthreadCall("lock", pthread_mutex_lock(&pm_));
           Backend expected = Backend::PTHREAD;
           if (!backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_TCLOCK,
@@ -132,10 +146,13 @@ void Mutex::Lock() {
           
           // 将状态切换到 TCLOCK
           backend_.store(Backend::TCLOCK, std::memory_order_release);
+          auto end_switch_time = std::chrono::high_resolution_clock::now();
+          std::chrono::duration<double, std::milli> switch_duration = end_switch_time - start_switch_time;
+          printf("Switching to TCLOCK took: %f ms\n", switch_duration.count());
 #ifdef LEVELDB_TESTS
           test_switch_to_tclock_count_.fetch_add(1, std::memory_order_relaxed);
 #endif
-          printf("Switching to TCLOCK\n");
+          LOG("Switching to TCLOCK");
           
           // 释放 pm_ 锁
           pthread_mutex_unlock(&pm_);
@@ -150,6 +167,7 @@ void Mutex::Lock() {
       }
       return;
     }else if (b == Backend::TCLOCK) {
+      // LOG("TCLOCK backend");
       unsigned int active_komb_threads = komb_api_get_active_threads_count();
       bool force_switch = (active_komb_threads < kForcePthreadActiveThreadThreshold);
 
@@ -167,6 +185,7 @@ void Mutex::Lock() {
 
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
+
           int64_t current_window_start = success_window_start_ns_.load(std::memory_order_acquire);
           bool initiate_back_switch = false;
           if(now_ns - current_window_start > kBackWindowNs){
@@ -185,10 +204,22 @@ void Mutex::Lock() {
           }
           success_cnt_.fetch_add(1, std::memory_order_relaxed);
           if(initiate_back_switch){
+            start_switch_to_pthread_time = std::chrono::high_resolution_clock::now();
             Backend expected = Backend::TCLOCK;
             if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
-              printf("start switching to PTHREAD\n"); 
+              // printf("start switching to PTHREAD\n"); 
             }
+            PthreadCall("lock", pthread_mutex_lock(&pm_));
+            backend_.store(Backend::PTHREAD, std::memory_order_release);
+            auto end_switch_to_pthread_time = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> switch_duration = end_switch_to_pthread_time - start_switch_to_pthread_time;
+            printf("Switching to PTHREAD took: %f ms\n", switch_duration.count());
+#ifdef LEVELDB_TESTS
+            test_switch_to_pthread_count_.fetch_add(1, std::memory_order_relaxed);
+#endif
+            LOG("Switching to PTHREAD");
+            // 释放 km_ 锁
+            komb_api_mutex_unlock(km_);
           }
           return;
         }else{
@@ -206,22 +237,7 @@ void Mutex::Lock() {
         }
       }
     }else if (b == Backend::SWITCHING_TO_PTHREAD) {
-      PthreadCall("lock", pthread_mutex_lock(&pm_));
-      if (backend_.load(std::memory_order_acquire) == Backend::SWITCHING_TO_PTHREAD) {
-        while(komb_api_mutex_trylock(km_) != 0){
-          // 等待 km_ 锁释放
-          std::this_thread::yield();
-        }
-        backend_.store(Backend::PTHREAD, std::memory_order_release);
-        printf("Switching to PTHREAD\n");
-#ifdef LEVELDB_TESTS
-        test_switch_to_pthread_count_.fetch_add(1, std::memory_order_relaxed);
-#endif
-        // 释放 km_ 锁
-        komb_api_mutex_unlock(km_);
-        return;
-      }
-      pthread_mutex_unlock(&pm_);
+      std::this_thread::yield();
       continue;
     }else if(b == Backend::SWITCHING_TO_TCLOCK) {
       std::this_thread::yield();
@@ -238,12 +254,11 @@ void Mutex::Unlock() {
   Backend current = backend_.load(std::memory_order_acquire);
   if (current == Backend::PTHREAD) {
     PthreadCall("unlock", pthread_mutex_unlock(&pm_));
-  } else if (current == Backend::TCLOCK ||current == Backend::SWITCHING_TO_PTHREAD) {
+  } else if (current == Backend::TCLOCK ) {
     // 确保TLS准备就绪
     EnsureTLSReady();
     komb_api_mutex_unlock(km_);
   }
-
 #else
   PthreadCall("unlock", pthread_mutex_unlock(&pm_));
 #endif
@@ -301,9 +316,8 @@ CondVar::CondVar(Mutex* mu)
     : mu_(mu) {
 #ifdef USE_TCLOCK
     PthreadCall("init cv", komb_api_cond_init(&kcv_, NULL));
-#else
-    PthreadCall("init cv", pthread_cond_init(&cv_, NULL));
 #endif
+    PthreadCall("init cv", pthread_cond_init(&cv_, NULL));
 }
 
 CondVar::~CondVar() { 
@@ -316,15 +330,21 @@ CondVar::~CondVar() {
 
 void CondVar::Wait() {
 #ifdef USE_TCLOCK
-  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Mutex::Backend::TCLOCK) {
-    // 确保TLS准备就绪
-    EnsureTLSReady();
-    PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
-  } else if (current == Mutex::Backend::PTHREAD) {
-    PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+  while(true) {
+    Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+    if (current == Mutex::Backend::PTHREAD) {
+      PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
+      return;
+    } else if (current == Mutex::Backend::TCLOCK) {
+      EnsureTLSReady();
+      PthreadCall("wait", komb_api_cond_wait(&kcv_, mu_->km_));
+      return;
+    } else{
+      // 当前状态是 SWITCHING_TO_PTHREAD 或 SWITCHING_TO_TCLOCK
+      // 忽略这个状态，继续循环
+      std::this_thread::yield();
+    }
   }
-  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
 #else
   PthreadCall("wait", pthread_cond_wait(&cv_, &mu_->pm_));
 #endif
@@ -332,15 +352,22 @@ void CondVar::Wait() {
 
 void CondVar::Signal() {
 #ifdef USE_TCLOCK
-  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Mutex::Backend::TCLOCK) {
-    // 确保TLS准备就绪
-    EnsureTLSReady();
-    PthreadCall("signal", komb_api_cond_signal(&kcv_));
-  } else if (current == Mutex::Backend::PTHREAD) {
-    PthreadCall("signal", pthread_cond_signal(&cv_));
+  while(true){
+    Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+    if (current == Mutex::Backend::TCLOCK) {
+      // 确保TLS准备就绪
+      EnsureTLSReady();
+      PthreadCall("signal", komb_api_cond_signal(&kcv_));
+      return;
+    } else if (current == Mutex::Backend::PTHREAD) {
+      PthreadCall("signal", pthread_cond_signal(&cv_));
+      return;
+    } else{
+      // 当前状态是 SWITCHING_TO_PTHREAD 或 SWITCHING_TO_TCLOCK
+      // 忽略这个状态，继续循环
+      std::this_thread::yield();
+    }
   }
-  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
 #else
   PthreadCall("signal", pthread_cond_signal(&cv_));
 #endif
@@ -348,15 +375,22 @@ void CondVar::Signal() {
 
 void CondVar::SignalAll() {
 #ifdef USE_TCLOCK
-  Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
-  if (current == Mutex::Backend::TCLOCK) {
-    // 确保TLS准备就绪
-    EnsureTLSReady();
-    PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
-  } else if (current == Mutex::Backend::PTHREAD) {
-    PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+  while(true){
+    Mutex::Backend current = mu_->backend_.load(std::memory_order_acquire);
+    if (current == Mutex::Backend::TCLOCK) {
+      // 确保TLS准备就绪
+      EnsureTLSReady();
+      PthreadCall("broadcast", komb_api_cond_broadcast(&kcv_));
+      return;
+    } else if (current == Mutex::Backend::PTHREAD) {
+      PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
+      return;
+    } else{
+      // 当前状态是 SWITCHING_TO_PTHREAD 或 SWITCHING_TO_TCLOCK
+      // 忽略这个状态，继续循环
+      std::this_thread::yield();
+    }
   }
-  // 忽略 SWITCHING_TO_TCLOCK 状态，因为此时锁的持有者一定是正在切换的线程
 #else
   PthreadCall("broadcast", pthread_cond_broadcast(&cv_));
 #endif

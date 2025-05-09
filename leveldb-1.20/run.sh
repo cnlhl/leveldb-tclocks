@@ -4,7 +4,7 @@
 # $2 --> millisecond
 #db_bench --benchmarks=readrandom --threads=$1 --num=10 --time_ms=$2 2>&1 | grep readrandom
 set -x
-LOCK_DIR=./../../ulocks/src/litl
+LOCK_DIR=./../userspace/litl
 
 LOCKS=(libucomb_spinlock.sh libcna_spinlock.sh libaqswonode_spinlock.sh)
 

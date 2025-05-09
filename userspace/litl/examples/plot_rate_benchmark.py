@@ -42,8 +42,8 @@ Results for komb_mutex with 2 threads (5.000 s runtime):
   Total Trylock Successes: 44768795 (95.52%)
   Total Trylock Failures: 2097681 (4.48%)
   Blocking Locks after Trylock Fail: 2097681
-  Approx. Avg Attempts/Window (20ms): 187462
-  Approx. Avg Successes/Window (20ms): 179072
+  Approx. Avg Attempts/Window (20ms): 387462
+  Approx. Avg Successes/Window (20ms): 379072
   Approx. Avg Failures/Window (20ms): 8390
 --------------------------------------------------
 Profiling pthread_mutex with 3 threads for 5000 ms (window: 20 ms)...
@@ -83,7 +83,7 @@ Results for komb_mutex with 4 threads (5.000 s runtime):
   Total Trylock Failures: 15469 (0.03%)
   Blocking Locks after Trylock Fail: 15469
   Approx. Avg Attempts/Window (20ms): 203340
-  Approx. Avg Successes/Window (20ms): 203278
+  Approx. Avg Successes/Window (20ms): 253278
   Approx. Avg Failures/Window (20ms): 61
 --------------------------------------------------
 Profiling pthread_mutex with 6 threads for 5000 ms (window: 20 ms)...
