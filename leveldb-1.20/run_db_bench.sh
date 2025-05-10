@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ../../defaults.sh 
+source ./default.sh 
 
 cnt=${ncores}
 
@@ -11,8 +11,8 @@ DB_PATH=/tmp/db
 
 litl_path=../../userspace/litl/
 
-litl_lock=("" ${litl_path}/libaqswonode_spinlock.sh ${litl_path}/libkomb_spinlock.sh)
-lock_name=(stock shfllock komb)
+litl_lock=("" )
+lock_name=(adaptive)
 
 #Build if DB_BENCH does not exist
 if [ ! -f $DB_BENCH ]; then

@@ -460,7 +460,7 @@ komb_mutex_t *komb_mutex_create(const pthread_mutexattr_t *attr) {
     impl->tail   = NULL;
     impl->locked = 0;
 #if COND_VAR
-    REAL(pthread_mutex_init)(&impl->posix_lock, attr);
+    pthread_mutex_init(&impl->posix_lock, attr);
     DEBUG("Mutex init lock=%p posix_lock=%p\n", impl, &impl->posix_lock);
 #endif
 
@@ -501,7 +501,7 @@ int komb_mutex_lock(komb_mutex_t *impl, komb_node_t *UNUSED(me)) {
 #if COND_VAR
     if (ret == 0) {
         DEBUG_PTHREAD("[%d] Lock posix=%p\n", cur_thread_id, &impl->posix_lock);
-        assert(REAL(pthread_mutex_lock)(&impl->posix_lock) == 0);
+        assert(pthread_mutex_lock(&impl->posix_lock) == 0);
     }
 #endif
     DEBUG("[%d] Lock acquired posix=%p\n", cur_thread_id, &impl->posix_lock);
@@ -514,7 +514,7 @@ int komb_mutex_trylock(komb_mutex_t *impl, komb_node_t *UNUSED(me)) {
 #if COND_VAR
         DEBUG_PTHREAD("[%d] Lock posix=%p\n", cur_thread_id, &impl->posix_lock);
         int ret = 0;
-        while ((ret = REAL(pthread_mutex_trylock)(&impl->posix_lock)) == EBUSY)
+        while ((ret = pthread_mutex_trylock(&impl->posix_lock)) == EBUSY)
             ;
         assert(ret == 0);
 #endif
@@ -578,14 +578,14 @@ __attribute__((noipa, noinline)) void __komb_mutex_unlock(komb_mutex_t *lock) {
 void komb_mutex_unlock(komb_mutex_t *impl, komb_node_t *UNUSED(me)) {
 #if COND_VAR
     DEBUG_PTHREAD("[%d] Unlock posix=%p\n", cur_thread_id, &impl->posix_lock);
-    assert(REAL(pthread_mutex_unlock)(&impl->posix_lock) == 0);
+    assert(pthread_mutex_unlock(&impl->posix_lock) == 0);
 #endif
     __komb_mutex_unlock(impl);
 }
 
 int komb_mutex_destroy(komb_mutex_t *lock) {
 #if COND_VAR
-    REAL(pthread_mutex_destroy)(&lock->posix_lock);
+    pthread_mutex_destroy(&lock->posix_lock);
 #endif
     // free(lock);
     // lock = NULL;
@@ -595,7 +595,7 @@ int komb_mutex_destroy(komb_mutex_t *lock) {
 
 int komb_cond_init(komb_cond_t *cond, const pthread_condattr_t *attr) {
 #if COND_VAR
-    return REAL(pthread_cond_init)(cond, attr);
+    return pthread_cond_init(cond, attr);
 #else
     fprintf(stderr, "Error cond_var not supported.");
     assert(0);
@@ -615,9 +615,9 @@ int komb_cond_timedwait(komb_cond_t *cond, komb_mutex_t *lock,
                   &lock->posix_lock);
 
     if (ts)
-        res = REAL(pthread_cond_timedwait)(cond, &lock->posix_lock, ts);
+        res = pthread_cond_timedwait(cond, &lock->posix_lock, ts);
     else
-        res = REAL(pthread_cond_wait)(cond, &lock->posix_lock);
+        res = pthread_cond_wait(cond, &lock->posix_lock);
 
     if (res != 0 && res != ETIMEDOUT) {
         fprintf(stderr, "Error on cond_{timed,}wait %d\n", res);
@@ -625,7 +625,7 @@ int komb_cond_timedwait(komb_cond_t *cond, komb_mutex_t *lock,
     }
 
     int ret = 0;
-    if ((ret = REAL(pthread_mutex_unlock)(&lock->posix_lock)) != 0) {
+    if ((ret = pthread_mutex_unlock(&lock->posix_lock)) != 0) {
         fprintf(stderr, "Error on mutex_unlock %d\n", ret == EPERM);
         assert(0);
     }
@@ -645,7 +645,7 @@ int komb_cond_wait(komb_cond_t *cond, komb_mutex_t *lock, komb_node_t *me) {
 
 int komb_cond_signal(komb_cond_t *cond) {
 #if COND_VAR
-    return REAL(pthread_cond_signal)(cond);
+    return pthread_cond_signal(cond);
 #else
     fprintf(stderr, "Error cond_var not supported.");
     assert(0);
@@ -655,7 +655,7 @@ int komb_cond_signal(komb_cond_t *cond) {
 int komb_cond_broadcast(komb_cond_t *cond) {
 #if COND_VAR
     DEBUG("[%d] Broadcast cond=%p\n", cur_thread_id, cond);
-    return REAL(pthread_cond_broadcast)(cond);
+    return pthread_cond_broadcast(cond);
 #else
     fprintf(stderr, "Error cond_var not supported.");
     assert(0);
@@ -664,7 +664,7 @@ int komb_cond_broadcast(komb_cond_t *cond) {
 
 int komb_cond_destroy(komb_cond_t *cond) {
 #if COND_VAR
-    return REAL(pthread_cond_destroy)(cond);
+    return pthread_cond_destroy(cond);
 #else
     fprintf(stderr, "Error cond_var not supported.");
     assert(0);

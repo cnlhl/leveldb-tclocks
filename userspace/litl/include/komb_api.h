@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 #include <stdint.h>
-#include "kombmtx.h"
+#include "komb.h"
 
 #ifdef __cplusplus
 extern "C" {

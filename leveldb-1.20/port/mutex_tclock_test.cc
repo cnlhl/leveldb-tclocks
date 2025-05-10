@@ -71,7 +71,7 @@ TEST(MutexTClockTest, HighContention) {
   std::cout << "  Test duration: " << std::fixed << std::setprecision(2) << duration_ms.count() << " ms" << std::endl;
   std::cout << "  Throughput: " << std::fixed << std::setprecision(2) 
             << (final_counter_value / (duration_ms.count() / 1000.0)) / 1e6 << " M ops/sec" << std::endl;
-#ifdef USE_TCLOCK
+#if  defined(USE_TCLOCK) && defined(LEVELDB_TESTS)
   std::cout << "  Switch to TCLock count: " << Mutex::Test_GetSwitchToTClockCount() << std::endl;
   std::cout << "  Switch to pthread count: " << Mutex::Test_GetSwitchToPThreadCount() << std::endl;
 #endif

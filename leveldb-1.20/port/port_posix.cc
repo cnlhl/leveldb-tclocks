@@ -151,8 +151,8 @@ void Mutex::Lock() {
           printf("Switching to TCLOCK took: %f ms\n", switch_duration.count());
 #ifdef LEVELDB_TESTS
           test_switch_to_tclock_count_.fetch_add(1, std::memory_order_relaxed);
-#endif
           LOG("Switching to TCLOCK");
+#endif
           
           // 释放 pm_ 锁
           pthread_mutex_unlock(&pm_);
@@ -169,25 +169,13 @@ void Mutex::Lock() {
     }else if (b == Backend::TCLOCK) {
       // LOG("TCLOCK backend");
       unsigned int active_komb_threads = komb_api_get_active_threads_count();
-      bool force_switch = (active_komb_threads < kForcePthreadActiveThreadThreshold);
-
-      // if (force_switch) {
-      //   Backend expected = Backend::TCLOCK;
-      //   if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
-      //       printf("Switching to PTHREAD (forced by low active_komb_threads: %u)\n", active_komb_threads);
-      //       consecutive_success_windows_cnt_.store(0, std::memory_order_release);
-      //       success_cnt_.store(0, std::memory_order_release);
-      //       continue;
-      //   } else {
-      //       continue;
-      //   }
-      // }
 
       if (komb_api_mutex_trylock(km_) == 0) {
         if(backend_.load(std::memory_order_acquire) == Backend::TCLOCK){
 
           int64_t current_window_start = success_window_start_ns_.load(std::memory_order_acquire);
           bool initiate_back_switch = false;
+          bool force_switch = (active_komb_threads < kForcePthreadActiveThreadThreshold);
           if(now_ns - current_window_start > kBackWindowNs){
             if(success_window_start_ns_.compare_exchange_strong(current_window_start, now_ns, std::memory_order_acq_rel)){
               int64_t finished_window_success_cnt = success_cnt_.exchange(0, std::memory_order_acq_rel);
@@ -203,7 +191,14 @@ void Mutex::Lock() {
             }
           }
           success_cnt_.fetch_add(1, std::memory_order_relaxed);
-          if(initiate_back_switch){
+          if(initiate_back_switch|| force_switch){
+#ifdef LEVELDB_TESTS
+            if (force_switch) {
+              LOG("Force switching to PTHREAD (active_komb_threads: %u)", active_komb_threads);
+            } else {
+              LOG("Switching to PTHREAD (active_komb_threads: %u)", active_komb_threads);
+            }
+#endif
             start_switch_to_pthread_time = std::chrono::high_resolution_clock::now();
             Backend expected = Backend::TCLOCK;
             if (backend_.compare_exchange_strong(expected, Backend::SWITCHING_TO_PTHREAD, std::memory_order_acq_rel)) {
@@ -216,8 +211,8 @@ void Mutex::Lock() {
             printf("Switching to PTHREAD took: %f ms\n", switch_duration.count());
 #ifdef LEVELDB_TESTS
             test_switch_to_pthread_count_.fetch_add(1, std::memory_order_relaxed);
-#endif
             LOG("Switching to PTHREAD");
+#endif
             // 释放 km_ 锁
             komb_api_mutex_unlock(km_);
           }

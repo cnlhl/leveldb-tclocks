@@ -1,8 +1,8 @@
 # 编译 .c 文件为 .o 文件
-gcc -g -O0 -fPIC -c src/komb_api.c src/kombmtx.c src/utils.c -I./include -DFCT_LINK_SUFFIX=KOMBMTX -DWAITING_SPIN_THEN_PARK -DCOND_VAR=1
+gcc -g -O0 -fPIC -c src/komb_api.c src/komb.c src/utils.c -I./include -DFCT_LINK_SUFFIX=KOMB -DWAITING_SPIN_THEN_PARK -DCOND_VAR=1
 
 # 链接为共享库
-sudo gcc -shared -o /usr/local/lib/libkomb_api.so komb_api.o kombmtx.o utils.o
+sudo gcc -shared -o /usr/local/lib/libkomb_api.so komb_api.o komb.o utils.o
 
 # 注册共享库（可选但推荐）
 sudo ldconfig

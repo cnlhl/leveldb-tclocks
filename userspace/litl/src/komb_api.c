@@ -1,5 +1,5 @@
 #include <komb_api.h>
-#include "kombmtx.h"
+#include "komb.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdatomic.h>
