@@ -28,10 +28,8 @@ static void PthreadCall(const char* label, int result) {
 }
 
 // --- Configuration ---
-const int TOTAL_TEST_DURATION_MS = 5000; // 每个线程组合运行的总时长 (ms) / Total duration for each thread combo
-const int STATS_WINDOW_MS = 20;          // 统计窗口时长 (ms), e.g., kWindowNs / Stats window duration
-long long OPERATIONS_PER_WINDOW_TARGET = 100000; // 每个窗口内目标操作次数 (用于控制循环次数，实际可能更少)
-                                                // Target operations per window (to control loop count)
+const int TOTAL_TEST_DURATION_MS = 6000; // 每个线程组合运行的总时长 (ms) / Total duration for each thread combo
+const int STATS_WINDOW_MS = 24;          // 统计窗口时长 (ms), e.g., kWindowNs / Stats window duration
 
 // --- Thread-local statistics --- (Using GCC specific for simplicity, or use pthread_setspecific)
 typedef struct {
@@ -123,23 +121,6 @@ void* worker_thread(void* arg) {
         }
         
         current_window_ops++;
-
-        // Check if window duration has passed (simplified check)
-        // A more robust way would be to check at the start of each iteration
-        // or have a dedicated stats collection thread, but this is simpler for now.
-        if (current_window_ops >= OPERATIONS_PER_WINDOW_TARGET) {
-             int64_t now_ns = get_time_ns();
-             if ((now_ns - window_start_time_ns) >= (int64_t)STATS_WINDOW_MS * 1000000LL) {
-                // This is where you would ideally aggregate stats for *this* window
-                // For simplicity in this example, we let threads run and sum up at the end.
-                // A real profiler might send these window stats to a central collector.
-                window_start_time_ns = now_ns;
-                current_window_ops = 0; 
-             }
-        }
-        // Yield occasionally to prevent a tight loop from starving others,
-        // especially if trylock is very fast. Not strictly necessary for all lock types.
-        // if (stats->trylock_attempts % 1000 == 0) sched_yield(); 
     }
 
     if (args->use_komb) {

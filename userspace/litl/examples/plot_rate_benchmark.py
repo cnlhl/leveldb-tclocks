@@ -6,285 +6,285 @@ import re
 # --- 将你的 C 程序输出粘贴在这里 ---
 # --- Paste your C program output here ---
 benchmark_output_data = """
-Profiling pthread_mutex with 1 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 1 threads (5.000 s runtime):
-  Total Trylock Attempts: 120313628
-  Total Trylock Successes: 120313628 (100.00%)
+Profiling pthread_mutex with 1 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 1 threads (6.000 s runtime):
+  Total Trylock Attempts: 255003915
+  Total Trylock Successes: 255003915 (100.00%)
   Total Trylock Failures: 0 (0.00%)
   Blocking Locks after Trylock Fail: 0
-  Approx. Avg Attempts/Window (20ms): 481243
-  Approx. Avg Successes/Window (20ms): 481243
-  Approx. Avg Failures/Window (20ms): 0
+  Approx. Avg Attempts/Window (24ms): 1019994
+  Approx. Avg Successes/Window (24ms): 1019994
+  Approx. Avg Failures/Window (24ms): 0
 --------------------------------------------------
-Profiling komb_mutex with 1 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 1 threads (5.000 s runtime):
-  Total Trylock Attempts: 132052022
-  Total Trylock Successes: 132052022 (100.00%)
+Profiling komb_mutex with 1 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 1 threads (6.000 s runtime):
+  Total Trylock Attempts: 166294842
+  Total Trylock Successes: 166294842 (100.00%)
   Total Trylock Failures: 0 (0.00%)
   Blocking Locks after Trylock Fail: 0
-  Approx. Avg Attempts/Window (20ms): 528196
-  Approx. Avg Successes/Window (20ms): 528196
-  Approx. Avg Failures/Window (20ms): 0
+  Approx. Avg Attempts/Window (24ms): 665160
+  Approx. Avg Successes/Window (24ms): 665160
+  Approx. Avg Failures/Window (24ms): 0
 --------------------------------------------------
-Profiling pthread_mutex with 2 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 2 threads (5.000 s runtime):
-  Total Trylock Attempts: 56638751
-  Total Trylock Successes: 54260122 (95.80%)
-  Total Trylock Failures: 2378629 (4.20%)
-  Blocking Locks after Trylock Fail: 2378629
-  Approx. Avg Attempts/Window (20ms): 226549
-  Approx. Avg Successes/Window (20ms): 217034
-  Approx. Avg Failures/Window (20ms): 9514
+Profiling pthread_mutex with 2 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 2 threads (6.000 s runtime):
+  Total Trylock Attempts: 82193465
+  Total Trylock Successes: 76596027 (93.19%)
+  Total Trylock Failures: 5597438 (6.81%)
+  Blocking Locks after Trylock Fail: 5597438
+  Approx. Avg Attempts/Window (24ms): 328766
+  Approx. Avg Successes/Window (24ms): 306377
+  Approx. Avg Failures/Window (24ms): 22389
 --------------------------------------------------
-Profiling komb_mutex with 2 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 2 threads (5.000 s runtime):
-  Total Trylock Attempts: 46866476
-  Total Trylock Successes: 44768795 (95.52%)
-  Total Trylock Failures: 2097681 (4.48%)
-  Blocking Locks after Trylock Fail: 2097681
-  Approx. Avg Attempts/Window (20ms): 387462
-  Approx. Avg Successes/Window (20ms): 379072
-  Approx. Avg Failures/Window (20ms): 8390
+Profiling komb_mutex with 2 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 2 threads (6.000 s runtime):
+  Total Trylock Attempts: 39384604
+  Total Trylock Successes: 39384372 (100.00%)
+  Total Trylock Failures: 232 (0.00%)
+  Blocking Locks after Trylock Fail: 232
+  Approx. Avg Attempts/Window (24ms): 157535
+  Approx. Avg Successes/Window (24ms): 477534
+  Approx. Avg Failures/Window (24ms): 0
 --------------------------------------------------
-Profiling pthread_mutex with 3 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 3 threads (5.000 s runtime):
-  Total Trylock Attempts: 60245403
-  Total Trylock Successes: 56521765 (93.82%)
-  Total Trylock Failures: 3723638 (6.18%)
-  Blocking Locks after Trylock Fail: 3723638
-  Approx. Avg Attempts/Window (20ms): 240976
-  Approx. Avg Successes/Window (20ms): 226082
-  Approx. Avg Failures/Window (20ms): 14894
+Profiling pthread_mutex with 3 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 3 threads (6.000 s runtime):
+  Total Trylock Attempts: 99680497
+  Total Trylock Successes: 94590672 (94.89%)
+  Total Trylock Failures: 5089825 (5.11%)
+  Blocking Locks after Trylock Fail: 5089825
+  Approx. Avg Attempts/Window (24ms): 398715
+  Approx. Avg Successes/Window (24ms): 378356
+  Approx. Avg Failures/Window (24ms): 24358
 --------------------------------------------------
-Profiling komb_mutex with 3 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 3 threads (5.000 s runtime):
-  Total Trylock Attempts: 67368836
-  Total Trylock Successes: 67362957 (99.99%)
-  Total Trylock Failures: 5879 (0.01%)
-  Blocking Locks after Trylock Fail: 5879
-  Approx. Avg Attempts/Window (20ms): 269468
-  Approx. Avg Successes/Window (20ms): 269445
-  Approx. Avg Failures/Window (20ms): 23
+Profiling komb_mutex with 3 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 3 threads (6.000 s runtime):
+  Total Trylock Attempts: 60433637
+  Total Trylock Successes: 59526017 (98.50%)
+  Total Trylock Failures: 907620 (1.50%)
+  Blocking Locks after Trylock Fail: 907620
+  Approx. Avg Attempts/Window (24ms): 241729
+  Approx. Avg Successes/Window (24ms): 338099
+  Approx. Avg Failures/Window (24ms): 3630
 --------------------------------------------------
-Profiling pthread_mutex with 4 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 4 threads (5.000 s runtime):
-  Total Trylock Attempts: 66892848
-  Total Trylock Successes: 59721509 (89.28%)
-  Total Trylock Failures: 7171339 (10.72%)
-  Blocking Locks after Trylock Fail: 7171339
-  Approx. Avg Attempts/Window (20ms): 267565
-  Approx. Avg Successes/Window (20ms): 238880
-  Approx. Avg Failures/Window (20ms): 28684
+Profiling pthread_mutex with 4 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 4 threads (6.000 s runtime):
+  Total Trylock Attempts: 84137879
+  Total Trylock Successes: 74835820 (88.94%)
+  Total Trylock Failures: 9302059 (11.06%)
+  Blocking Locks after Trylock Fail: 9302059
+  Approx. Avg Attempts/Window (24ms): 336544
+  Approx. Avg Successes/Window (24ms): 299337
+  Approx. Avg Failures/Window (24ms): 33207
 --------------------------------------------------
-Profiling komb_mutex with 4 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 4 threads (5.000 s runtime):
-  Total Trylock Attempts: 50836432
-  Total Trylock Successes: 50820963 (99.97%)
-  Total Trylock Failures: 15469 (0.03%)
-  Blocking Locks after Trylock Fail: 15469
-  Approx. Avg Attempts/Window (20ms): 203340
-  Approx. Avg Successes/Window (20ms): 253278
-  Approx. Avg Failures/Window (20ms): 61
+Profiling komb_mutex with 4 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 4 threads (6.000 s runtime):
+  Total Trylock Attempts: 83665011
+  Total Trylock Successes: 83634596 (99.96%)
+  Total Trylock Failures: 30415 (0.04%)
+  Blocking Locks after Trylock Fail: 30415
+  Approx. Avg Attempts/Window (24ms): 334652
+  Approx. Avg Successes/Window (24ms): 284531
+  Approx. Avg Failures/Window (24ms): 121
 --------------------------------------------------
-Profiling pthread_mutex with 6 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 6 threads (5.000 s runtime):
-  Total Trylock Attempts: 47663145
-  Total Trylock Successes: 40294680 (84.54%)
-  Total Trylock Failures: 7368465 (15.46%)
-  Blocking Locks after Trylock Fail: 7368465
-  Approx. Avg Attempts/Window (20ms): 190648
-  Approx. Avg Successes/Window (20ms): 161175
-  Approx. Avg Failures/Window (20ms): 29473
+Profiling pthread_mutex with 6 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 6 threads (6.000 s runtime):
+  Total Trylock Attempts: 59965280
+  Total Trylock Successes: 49554179 (82.64%)
+  Total Trylock Failures: 10411101 (17.36%)
+  Blocking Locks after Trylock Fail: 10411101
+  Approx. Avg Attempts/Window (24ms): 239856
+  Approx. Avg Successes/Window (24ms): 198212
+  Approx. Avg Failures/Window (24ms): 37643
 --------------------------------------------------
-Profiling komb_mutex with 6 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 6 threads (5.000 s runtime):
-  Total Trylock Attempts: 57209891
-  Total Trylock Successes: 56975312 (99.59%)
-  Total Trylock Failures: 234579 (0.41%)
-  Blocking Locks after Trylock Fail: 234579
-  Approx. Avg Attempts/Window (20ms): 228834
-  Approx. Avg Successes/Window (20ms): 227896
-  Approx. Avg Failures/Window (20ms): 938
+Profiling komb_mutex with 6 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 6 threads (6.000 s runtime):
+  Total Trylock Attempts: 40389326
+  Total Trylock Successes: 35841099 (88.74%)
+  Total Trylock Failures: 4548227 (11.26%)
+  Blocking Locks after Trylock Fail: 4548227
+  Approx. Avg Attempts/Window (24ms): 161554
+  Approx. Avg Successes/Window (24ms): 203361
+  Approx. Avg Failures/Window (24ms): 18192
 --------------------------------------------------
-Profiling pthread_mutex with 8 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 8 threads (5.000 s runtime):
-  Total Trylock Attempts: 45170824
-  Total Trylock Successes: 38533976 (85.31%)
-  Total Trylock Failures: 6636848 (14.69%)
-  Blocking Locks after Trylock Fail: 6636848
-  Approx. Avg Attempts/Window (20ms): 180679
-  Approx. Avg Successes/Window (20ms): 154132
-  Approx. Avg Failures/Window (20ms): 26546
+Profiling pthread_mutex with 8 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 8 threads (6.000 s runtime):
+  Total Trylock Attempts: 54142685
+  Total Trylock Successes: 43881785 (81.05%)
+  Total Trylock Failures: 10260900 (18.95%)
+  Blocking Locks after Trylock Fail: 10260900
+  Approx. Avg Attempts/Window (24ms): 216567
+  Approx. Avg Successes/Window (24ms): 175524
+  Approx. Avg Failures/Window (24ms): 39042
 --------------------------------------------------
-Profiling komb_mutex with 8 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 8 threads (5.000 s runtime):
-  Total Trylock Attempts: 32729428
-  Total Trylock Successes: 29838491 (91.17%)
-  Total Trylock Failures: 2890937 (8.83%)
-  Blocking Locks after Trylock Fail: 2890937
-  Approx. Avg Attempts/Window (20ms): 130914
-  Approx. Avg Successes/Window (20ms): 119350
-  Approx. Avg Failures/Window (20ms): 11563
+Profiling komb_mutex with 8 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 8 threads (6.000 s runtime):
+  Total Trylock Attempts: 28084696
+  Total Trylock Successes: 26886051 (95.73%)
+  Total Trylock Failures: 1198645 (4.27%)
+  Blocking Locks after Trylock Fail: 1198645
+  Approx. Avg Attempts/Window (24ms): 112336
+  Approx. Avg Successes/Window (24ms): 157542
+  Approx. Avg Failures/Window (24ms): 4794
 --------------------------------------------------
-Profiling pthread_mutex with 12 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 12 threads (5.000 s runtime):
-  Total Trylock Attempts: 46015842
-  Total Trylock Successes: 39845796 (86.59%)
-  Total Trylock Failures: 6170046 (13.41%)
-  Blocking Locks after Trylock Fail: 6170046
-  Approx. Avg Attempts/Window (20ms): 184061
-  Approx. Avg Successes/Window (20ms): 159381
-  Approx. Avg Failures/Window (20ms): 24679
+Profiling pthread_mutex with 12 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 12 threads (6.000 s runtime):
+  Total Trylock Attempts: 49766407
+  Total Trylock Successes: 41808402 (84.01%)
+  Total Trylock Failures: 7958005 (15.99%)
+  Blocking Locks after Trylock Fail: 7958005
+  Approx. Avg Attempts/Window (24ms): 199063
+  Approx. Avg Successes/Window (24ms): 167231
+  Approx. Avg Failures/Window (24ms): 32831
 --------------------------------------------------
-Profiling komb_mutex with 12 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 12 threads (5.000 s runtime):
-  Total Trylock Attempts: 26506222
-  Total Trylock Successes: 23206777 (87.55%)
-  Total Trylock Failures: 3299445 (12.45%)
-  Blocking Locks after Trylock Fail: 3299445
-  Approx. Avg Attempts/Window (20ms): 106022
-  Approx. Avg Successes/Window (20ms): 92825
-  Approx. Avg Failures/Window (20ms): 13197
+Profiling komb_mutex with 12 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 12 threads (6.000 s runtime):
+  Total Trylock Attempts: 32070545
+  Total Trylock Successes: 31969338 (99.68%)
+  Total Trylock Failures: 101207 (0.32%)
+  Blocking Locks after Trylock Fail: 101207
+  Approx. Avg Attempts/Window (24ms): 128279
+  Approx. Avg Successes/Window (24ms): 127874
+  Approx. Avg Failures/Window (24ms): 404
 --------------------------------------------------
-Profiling pthread_mutex with 16 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 16 threads (5.000 s runtime):
-  Total Trylock Attempts: 46074296
-  Total Trylock Successes: 39732315 (86.24%)
-  Total Trylock Failures: 6341981 (13.76%)
-  Blocking Locks after Trylock Fail: 6341981
-  Approx. Avg Attempts/Window (20ms): 184295
-  Approx. Avg Successes/Window (20ms): 158927
-  Approx. Avg Failures/Window (20ms): 25367
+Profiling pthread_mutex with 16 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 16 threads (6.000 s runtime):
+  Total Trylock Attempts: 42002474
+  Total Trylock Successes: 35484761 (84.48%)
+  Total Trylock Failures: 6517713 (15.52%)
+  Blocking Locks after Trylock Fail: 6517713
+  Approx. Avg Attempts/Window (24ms): 168008
+  Approx. Avg Successes/Window (24ms): 141937
+  Approx. Avg Failures/Window (24ms): 26070
 --------------------------------------------------
-Profiling komb_mutex with 16 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 16 threads (5.000 s runtime):
-  Total Trylock Attempts: 12916743
-  Total Trylock Successes: 8439430 (65.34%)
-  Total Trylock Failures: 4477313 (34.66%)
-  Blocking Locks after Trylock Fail: 4477313
-  Approx. Avg Attempts/Window (20ms): 51665
-  Approx. Avg Successes/Window (20ms): 33756
-  Approx. Avg Failures/Window (20ms): 17908
+Profiling komb_mutex with 16 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 16 threads (6.000 s runtime):
+  Total Trylock Attempts: 37936840
+  Total Trylock Successes: 37897956 (99.90%)
+  Total Trylock Failures: 38884 (0.10%)
+  Blocking Locks after Trylock Fail: 38884
+  Approx. Avg Attempts/Window (24ms): 151743
+  Approx. Avg Successes/Window (24ms): 151588
+  Approx. Avg Failures/Window (24ms): 155
 --------------------------------------------------
-Profiling pthread_mutex with 20 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 20 threads (5.000 s runtime):
-  Total Trylock Attempts: 45843579
-  Total Trylock Successes: 40176073 (87.64%)
-  Total Trylock Failures: 5667506 (12.36%)
-  Blocking Locks after Trylock Fail: 5667506
-  Approx. Avg Attempts/Window (20ms): 183372
-  Approx. Avg Successes/Window (20ms): 160702
-  Approx. Avg Failures/Window (20ms): 22669
+Profiling pthread_mutex with 20 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 20 threads (6.000 s runtime):
+  Total Trylock Attempts: 41331070
+  Total Trylock Successes: 35691040 (86.35%)
+  Total Trylock Failures: 5640030 (13.65%)
+  Blocking Locks after Trylock Fail: 5640030
+  Approx. Avg Attempts/Window (24ms): 165322
+  Approx. Avg Successes/Window (24ms): 142762
+  Approx. Avg Failures/Window (24ms): 22559
 --------------------------------------------------
-Profiling komb_mutex with 20 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 20 threads (5.000 s runtime):
-  Total Trylock Attempts: 8199077
-  Total Trylock Successes: 3104269 (37.86%)
-  Total Trylock Failures: 5094808 (62.14%)
-  Blocking Locks after Trylock Fail: 5094808
-  Approx. Avg Attempts/Window (20ms): 32795
-  Approx. Avg Successes/Window (20ms): 12416
-  Approx. Avg Failures/Window (20ms): 20378
+Profiling komb_mutex with 20 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 20 threads (6.000 s runtime):
+  Total Trylock Attempts: 20549445
+  Total Trylock Successes: 19528854 (95.03%)
+  Total Trylock Failures: 1020591 (4.97%)
+  Blocking Locks after Trylock Fail: 1020591
+  Approx. Avg Attempts/Window (24ms): 82196
+  Approx. Avg Successes/Window (24ms): 78114
+  Approx. Avg Failures/Window (24ms): 4082
 --------------------------------------------------
-Profiling pthread_mutex with 24 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 24 threads (5.000 s runtime):
-  Total Trylock Attempts: 41321451
-  Total Trylock Successes: 37071047 (89.71%)
-  Total Trylock Failures: 4250404 (10.29%)
-  Blocking Locks after Trylock Fail: 4250404
-  Approx. Avg Attempts/Window (20ms): 165283
-  Approx. Avg Successes/Window (20ms): 148282
-  Approx. Avg Failures/Window (20ms): 17001
+Profiling pthread_mutex with 24 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 24 threads (6.000 s runtime):
+  Total Trylock Attempts: 41276529
+  Total Trylock Successes: 36382315 (88.14%)
+  Total Trylock Failures: 4894214 (11.86%)
+  Blocking Locks after Trylock Fail: 4894214
+  Approx. Avg Attempts/Window (24ms): 165104
+  Approx. Avg Successes/Window (24ms): 145527
+  Approx. Avg Failures/Window (24ms): 19576
 --------------------------------------------------
-Profiling komb_mutex with 24 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 24 threads (5.000 s runtime):
-  Total Trylock Attempts: 7282762
-  Total Trylock Successes: 2078376 (28.54%)
-  Total Trylock Failures: 5204386 (71.46%)
-  Blocking Locks after Trylock Fail: 5204386
-  Approx. Avg Attempts/Window (20ms): 29130
-  Approx. Avg Successes/Window (20ms): 8313
-  Approx. Avg Failures/Window (20ms): 20817
+Profiling komb_mutex with 24 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 24 threads (6.000 s runtime):
+  Total Trylock Attempts: 58676896
+  Total Trylock Successes: 58412479 (99.55%)
+  Total Trylock Failures: 264417 (0.45%)
+  Blocking Locks after Trylock Fail: 264417
+  Approx. Avg Attempts/Window (24ms): 234705
+  Approx. Avg Successes/Window (24ms): 233647
+  Approx. Avg Failures/Window (24ms): 1057
 --------------------------------------------------
-Profiling pthread_mutex with 28 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 28 threads (5.000 s runtime):
-  Total Trylock Attempts: 47663782
-  Total Trylock Successes: 40317741 (84.59%)
-  Total Trylock Failures: 7346041 (15.41%)
-  Blocking Locks after Trylock Fail: 7346041
-  Approx. Avg Attempts/Window (20ms): 190652
-  Approx. Avg Successes/Window (20ms): 161269
-  Approx. Avg Failures/Window (20ms): 29383
+Profiling pthread_mutex with 28 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 28 threads (6.000 s runtime):
+  Total Trylock Attempts: 43818735
+  Total Trylock Successes: 38976576 (88.95%)
+  Total Trylock Failures: 4842159 (11.05%)
+  Blocking Locks after Trylock Fail: 4842159
+  Approx. Avg Attempts/Window (24ms): 175272
+  Approx. Avg Successes/Window (24ms): 155903
+  Approx. Avg Failures/Window (24ms): 19368
 --------------------------------------------------
-Profiling komb_mutex with 28 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 28 threads (5.000 s runtime):
-  Total Trylock Attempts: 6267118
-  Total Trylock Successes: 1125831 (17.96%)
-  Total Trylock Failures: 5141287 (82.04%)
-  Blocking Locks after Trylock Fail: 5141287
-  Approx. Avg Attempts/Window (20ms): 25067
-  Approx. Avg Successes/Window (20ms): 4503
-  Approx. Avg Failures/Window (20ms): 20564
+Profiling komb_mutex with 28 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 28 threads (6.000 s runtime):
+  Total Trylock Attempts: 60607495
+  Total Trylock Successes: 60603475 (99.99%)
+  Total Trylock Failures: 4020 (0.01%)
+  Blocking Locks after Trylock Fail: 4020
+  Approx. Avg Attempts/Window (24ms): 242427
+  Approx. Avg Successes/Window (24ms): 242411
+  Approx. Avg Failures/Window (24ms): 16
 --------------------------------------------------
-Profiling pthread_mutex with 32 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 32 threads (5.000 s runtime):
-  Total Trylock Attempts: 43895458
-  Total Trylock Successes: 39811686 (90.70%)
-  Total Trylock Failures: 4083772 (9.30%)
-  Blocking Locks after Trylock Fail: 4083772
-  Approx. Avg Attempts/Window (20ms): 175579
-  Approx. Avg Successes/Window (20ms): 159244
-  Approx. Avg Failures/Window (20ms): 16334
+Profiling pthread_mutex with 32 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 32 threads (6.000 s runtime):
+  Total Trylock Attempts: 46516114
+  Total Trylock Successes: 41516268 (89.25%)
+  Total Trylock Failures: 4999846 (10.75%)
+  Blocking Locks after Trylock Fail: 4999846
+  Approx. Avg Attempts/Window (24ms): 186062
+  Approx. Avg Successes/Window (24ms): 166063
+  Approx. Avg Failures/Window (24ms): 19999
 --------------------------------------------------
-Profiling komb_mutex with 32 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 32 threads (5.000 s runtime):
-  Total Trylock Attempts: 5626231
-  Total Trylock Successes: 266897 (4.74%)
-  Total Trylock Failures: 5359334 (95.26%)
-  Blocking Locks after Trylock Fail: 5359334
-  Approx. Avg Attempts/Window (20ms): 22504
-  Approx. Avg Successes/Window (20ms): 1067
-  Approx. Avg Failures/Window (20ms): 21437
+Profiling komb_mutex with 32 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 32 threads (6.000 s runtime):
+  Total Trylock Attempts: 42734814
+  Total Trylock Successes: 42576375 (99.63%)
+  Total Trylock Failures: 158439 (0.37%)
+  Blocking Locks after Trylock Fail: 158439
+  Approx. Avg Attempts/Window (24ms): 170937
+  Approx. Avg Successes/Window (24ms): 170303
+  Approx. Avg Failures/Window (24ms): 633
 --------------------------------------------------
-Profiling pthread_mutex with 40 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 40 threads (5.000 s runtime):
-  Total Trylock Attempts: 45224669
-  Total Trylock Successes: 40128632 (88.73%)
-  Total Trylock Failures: 5096037 (11.27%)
-  Blocking Locks after Trylock Fail: 5096037
-  Approx. Avg Attempts/Window (20ms): 180895
-  Approx. Avg Successes/Window (20ms): 160511
-  Approx. Avg Failures/Window (20ms): 20383
+Profiling pthread_mutex with 40 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 40 threads (6.000 s runtime):
+  Total Trylock Attempts: 49964405
+  Total Trylock Successes: 45015325 (90.09%)
+  Total Trylock Failures: 4949080 (9.91%)
+  Blocking Locks after Trylock Fail: 4949080
+  Approx. Avg Attempts/Window (24ms): 199855
+  Approx. Avg Successes/Window (24ms): 180059
+  Approx. Avg Failures/Window (24ms): 19796
 --------------------------------------------------
-Profiling komb_mutex with 40 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 40 threads (5.000 s runtime):
-  Total Trylock Attempts: 6414459
-  Total Trylock Successes: 1335862 (20.83%)
-  Total Trylock Failures: 5078597 (79.17%)
-  Blocking Locks after Trylock Fail: 5078597
-  Approx. Avg Attempts/Window (20ms): 25657
-  Approx. Avg Successes/Window (20ms): 5343
-  Approx. Avg Failures/Window (20ms): 20313
+Profiling komb_mutex with 40 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 40 threads (6.000 s runtime):
+  Total Trylock Attempts: 42480096
+  Total Trylock Successes: 42454242 (99.94%)
+  Total Trylock Failures: 25854 (0.06%)
+  Blocking Locks after Trylock Fail: 25854
+  Approx. Avg Attempts/Window (24ms): 169918
+  Approx. Avg Successes/Window (24ms): 169815
+  Approx. Avg Failures/Window (24ms): 103
 --------------------------------------------------
-Profiling pthread_mutex with 56 threads for 5000 ms (window: 20 ms)...
-Results for pthread_mutex with 56 threads (5.000 s runtime):
-  Total Trylock Attempts: 43044501
-  Total Trylock Successes: 38979652 (90.56%)
-  Total Trylock Failures: 4064849 (9.44%)
-  Blocking Locks after Trylock Fail: 4064849
-  Approx. Avg Attempts/Window (20ms): 172174
-  Approx. Avg Successes/Window (20ms): 155915
-  Approx. Avg Failures/Window (20ms): 16259
+Profiling pthread_mutex with 56 threads for 6000 ms (window: 24 ms)...
+Results for pthread_mutex with 56 threads (6.000 s runtime):
+  Total Trylock Attempts: 52928849
+  Total Trylock Successes: 47949552 (90.59%)
+  Total Trylock Failures: 4979297 (9.41%)
+  Blocking Locks after Trylock Fail: 4979297
+  Approx. Avg Attempts/Window (24ms): 211713
+  Approx. Avg Successes/Window (24ms): 191796
+  Approx. Avg Failures/Window (24ms): 19916
 --------------------------------------------------
-Profiling komb_mutex with 56 threads for 5000 ms (window: 20 ms)...
-Results for komb_mutex with 56 threads (5.000 s runtime):
-  Total Trylock Attempts: 5775589
-  Total Trylock Successes: 488431 (8.46%)
-  Total Trylock Failures: 5287158 (91.54%)
-  Blocking Locks after Trylock Fail: 5287158
-  Approx. Avg Attempts/Window (20ms): 23101
-  Approx. Avg Successes/Window (20ms): 1953
-  Approx. Avg Failures/Window (20ms): 21148
+Profiling komb_mutex with 56 threads for 6000 ms (window: 24 ms)...
+Results for komb_mutex with 56 threads (6.000 s runtime):
+  Total Trylock Attempts: 38987238
+  Total Trylock Successes: 38957430 (99.92%)
+  Total Trylock Failures: 29808 (0.08%)
+  Blocking Locks after Trylock Fail: 29808
+  Approx. Avg Attempts/Window (24ms): 155947
+  Approx. Avg Successes/Window (24ms): 155828
+  Approx. Avg Failures/Window (24ms): 119
 --------------------------------------------------
 """ # --- 结束粘贴区域 ---
 
@@ -368,6 +368,7 @@ df_komb = df_komb.sort_values(by='threads').reset_index(drop=True)
 
 # --- Plotting ---
 plt.style.use('seaborn-v0_8-whitegrid') 
+plt.rcParams.update({'font.size': 16})
 fig, axs = plt.subplots(2, 1, figsize=(14, 12), sharex=True) # Increased figure size
 
 # Plot 1: pthread_mutex - Avg Failures per Window
@@ -381,7 +382,7 @@ if not df_pthread.empty and 'avg_failures_per_window' in df_pthread.columns and 
     # Add text annotations for pthread data points
     for i, row in df_pthread.iterrows():
         if pd.notna(row['avg_failures_per_window']):
-            axs[0].text(row['threads'], row['avg_failures_per_window'], f" {int(row['avg_failures_per_window'])}", va='center', ha='left', fontsize=9, color='darkred')
+            axs[0].text(row['threads'], row['avg_failures_per_window'], f" {int(row['avg_failures_per_window'])}", va='center', ha='left',  color='darkred')
 else:
     axs[0].text(0.5, 0.5, 'No failure data for pthread_mutex or data missing', ha='center', va='center')
     axs[0].set_title('pthread_mutex: Trylock Failures vs. Thread Count')
@@ -398,14 +399,13 @@ if not df_komb.empty and 'avg_successes_per_window' in df_komb.columns and df_ko
     # Add text annotations for komb data points
     for i, row in df_komb.iterrows():
          if pd.notna(row['avg_successes_per_window']):
-            axs[1].text(row['threads'], row['avg_successes_per_window'], f" {int(row['avg_successes_per_window'])}", va='center', ha='right', fontsize=9, color='darkgreen')
+            axs[1].text(row['threads'], row['avg_successes_per_window'], f" {int(row['avg_successes_per_window'])}", va='center', ha='right',color='darkgreen')
 else:
     axs[1].text(0.5, 0.5, 'No success data for komb_mutex or data missing', ha='center', va='center')
     axs[1].set_title('komb_mutex: Trylock Successes vs. Thread Count')
 
 
 axs[1].set_xlabel('Number of Concurrent Threads')
-fig.suptitle('Trylock Behavior Analysis for Lock Switching Thresholds', fontsize=16)
 plt.tight_layout(rect=[0, 0, 1, 0.96]) 
 plt.show()
 fig.savefig("trylock_analysis.png", dpi=300, bbox_inches='tight')

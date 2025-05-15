@@ -206,10 +206,10 @@ void Mutex::Lock() {
             }
             PthreadCall("lock", pthread_mutex_lock(&pm_));
             backend_.store(Backend::PTHREAD, std::memory_order_release);
+#ifdef LEVELDB_TESTS
             auto end_switch_to_pthread_time = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> switch_duration = end_switch_to_pthread_time - start_switch_to_pthread_time;
             printf("Switching to PTHREAD took: %f ms\n", switch_duration.count());
-#ifdef LEVELDB_TESTS
             test_switch_to_pthread_count_.fetch_add(1, std::memory_order_relaxed);
             LOG("Switching to PTHREAD");
 #endif
