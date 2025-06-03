@@ -72,15 +72,27 @@ def main():
     plt.rcParams.update({'font.size': 16})
     plt.style.use('seaborn-v0_8-whitegrid') 
     plt.figure(figsize=(10, 6))
-    plt.plot(actual_thread_counts, execution_times, marker='o', linestyle='-', color='skyblue')
+    plt.plot(actual_thread_counts, execution_times, marker='o', linestyle='-', color='cornflowerblue')
     # plt.title('Total Execution Time vs. Number of Threads (Mutex Lock)')
-    plt.xlabel('Number of Threads')
+    # --- 修改部分：将横坐标改为以2为底的对数刻度 ---
+    plt.xscale('log', base=2)
+    plt.xlabel('Number of Threads (Log Scale Base 2)')
+    # --- 修改结束 ---
+
     plt.ylabel('Total Execution Time (ms)')
-    plt.xticks(actual_thread_counts) # 确保x轴刻度为实际测试的线程数
-    plt.grid(True)
-    # plt.show()
+    # plt.title('Total Execution Time vs. Number of Threads (Mutex Lock)') # 如果需要，可以取消注释标题
+
+    # 在对数刻度上明确设置x轴刻度为实际测试的线程数，并使用数字作为标签
+    plt.xticks(actual_thread_counts, labels=[str(tc) for tc in actual_thread_counts])
+    
+    # 为对数x轴和线性y轴设置网格线
+    # which="both" 会同时显示主刻度和次刻度的网格线（对于对数轴特别有用）
+    plt.grid(True, which="major", axis='x', linestyle='-', linewidth=0.7)
+    plt.grid(True, which="minor", axis='x', linestyle=':', linewidth=0.5) # 次要网格线使用虚线
+    plt.grid(True, axis='y', linestyle='-', linewidth=0.7)
+    
     # 保存高清图像
-    output_image_path = "execution_time_vs_threads.png"
+    output_image_path = "execution_time_vs_threads_log_x.png" # 修改文件名以反映对数刻度
     plt.savefig(output_image_path, dpi=300, bbox_inches='tight')
     print(f"图像已保存到: {output_image_path}")
 
