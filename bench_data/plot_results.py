@@ -68,9 +68,12 @@ def main():
         return
 
     # 绘图
+    # 图像字体大小为16
+    plt.rcParams.update({'font.size': 16})
+    plt.style.use('seaborn-v0_8-whitegrid') 
     plt.figure(figsize=(10, 6))
-    plt.plot(actual_thread_counts, execution_times, marker='o', linestyle='-')
-    plt.title('Total Execution Time vs. Number of Threads (Mutex Lock)')
+    plt.plot(actual_thread_counts, execution_times, marker='o', linestyle='-', color='skyblue')
+    # plt.title('Total Execution Time vs. Number of Threads (Mutex Lock)')
     plt.xlabel('Number of Threads')
     plt.ylabel('Total Execution Time (ms)')
     plt.xticks(actual_thread_counts) # 确保x轴刻度为实际测试的线程数
